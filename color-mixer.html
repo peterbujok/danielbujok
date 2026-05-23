@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Color Mixer!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Bubblegum Sans', cursive;
+    background: linear-gradient(180deg, #fff8e7 0%, #ffe9c2 60%, #fcd9a8 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 12px;
+    position: relative;
+  }
+
+  .banner {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(28px, 6vw, 44px);
+    color: #7c2d12;
+    text-shadow: 3px 3px 0 #fde68a, 5px 5px 0 #00000018;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .banner span { display: inline-block; animation: bob 2s ease-in-out infinite; }
+  @keyframes bob {
+    0%,100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-6px) rotate(2deg); }
+  }
+
+  /* PAINT BUCKETS */
+  .buckets {
+    display: flex;
+    gap: clamp(12px, 3vw, 24px);
+    width: 100%;
+    max-width: 760px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .bucket {
+    flex: 1;
+    max-width: 220px;
+    aspect-ratio: 1 / 1.05;
+    position: relative;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s;
+    padding: 0;
+  }
+  .bucket:active {
+    transform: translateY(4px) scale(0.96);
+  }
+  .bucket .bucket-body {
+    position: absolute;
+    bottom: 0;
+    left: 6%;
+    right: 6%;
+    height: 80%;
+    border-radius: 12px 12px 26px 26px / 14px 14px 50% 50%;
+    box-shadow: inset 0 -12px 0 #00000028, 0 8px 0 #00000022, 0 16px 30px #00000022;
+    border: 4px solid #00000033;
+  }
+  .bucket .bucket-band {
+    position: absolute;
+    top: 28%;
+    left: -2%;
+    right: -2%;
+    height: 12%;
+    background: rgba(0,0,0,0.18);
+    border-radius: 4px;
+  }
+  .bucket .bucket-handle {
+    position: absolute;
+    top: -2%;
+    left: 14%;
+    right: 14%;
+    height: 24%;
+    border: 6px solid #4b5563;
+    border-bottom: none;
+    border-radius: 50% 50% 0 0;
+    background: transparent;
+  }
+  .bucket .bucket-paint {
+    position: absolute;
+    top: 12%;
+    left: 14%;
+    right: 14%;
+    height: 24%;
+    border-radius: 50%;
+    box-shadow: inset 0 4px 8px #ffffff66;
+  }
+  .bucket .splat {
+    position: absolute;
+    bottom: -14%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(40px, 8vw, 72px);
+    line-height: 1;
+    filter: drop-shadow(0 4px 4px #00000033);
+    pointer-events: none;
+  }
+
+  .bucket--red .bucket-body { background: linear-gradient(180deg, #fca5a5 0%, #ef4444 60%, #b91c1c 100%); }
+  .bucket--red .bucket-paint { background: radial-gradient(circle at 40% 30%, #fee2e2, #ef4444); }
+  .bucket--yellow .bucket-body { background: linear-gradient(180deg, #fef08a 0%, #facc15 60%, #ca8a04 100%); }
+  .bucket--yellow .bucket-paint { background: radial-gradient(circle at 40% 30%, #fef9c3, #facc15); }
+  .bucket--blue .bucket-body { background: linear-gradient(180deg, #93c5fd 0%, #3b82f6 60%, #1d4ed8 100%); }
+  .bucket--blue .bucket-paint { background: radial-gradient(circle at 40% 30%, #dbeafe, #3b82f6); }
+
+  .bucket.tilt {
+    animation: pour 0.7s ease-in-out;
+  }
+  @keyframes pour {
+    0%, 100% { transform: rotate(0deg); }
+    30% { transform: rotate(-22deg) translateX(20px); }
+    60% { transform: rotate(-22deg) translateX(20px); }
+  }
+
+  /* MIXING BOWL */
+  .bowl-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 540px;
+    aspect-ratio: 1.4 / 1;
+    margin: 8px 0 16px;
+  }
+
+  .bowl {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    border: 8px solid #422006;
+    border-radius: 50% 50% 50% 50% / 14% 14% 88% 88%;
+    overflow: hidden;
+    box-shadow: 0 14px 30px #00000033, inset 0 -20px 40px #00000022;
+    transition: background 0.6s ease;
+  }
+  .bowl-rim {
+    position: absolute;
+    top: -8%;
+    left: -2%;
+    right: -2%;
+    height: 22%;
+    background: #5a2c0a;
+    border-radius: 50%;
+    box-shadow: inset 0 6px 0 #422006, inset 0 -6px 0 #7c3a0f;
+    z-index: 3;
+  }
+  .bowl-inside {
+    position: absolute;
+    inset: 12% 6% 6% 6%;
+    border-radius: 50% 50% 50% 50% / 18% 18% 82% 82%;
+    background: #fff;
+    z-index: 1;
+    transition: background 0.6s ease;
+    overflow: hidden;
+  }
+  .bowl-shimmer {
+    position: absolute;
+    top: 14%;
+    left: 12%;
+    width: 25%;
+    height: 8%;
+    background: rgba(255,255,255,0.55);
+    border-radius: 50%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* drop falling */
+  .drop {
+    position: absolute;
+    top: -40px;
+    width: 40px;
+    height: 50px;
+    border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+    box-shadow: inset 0 -8px 0 #00000022, 0 3px 6px #00000022;
+    z-index: 4;
+    pointer-events: none;
+    animation: dropFall 0.7s cubic-bezier(.7,0,.9,.6) forwards;
+  }
+  @keyframes dropFall {
+    0% { top: -60px; transform: translateX(-50%) scale(0.8, 1.1); }
+    70% { top: 35%; transform: translateX(-50%) scale(0.9, 1); }
+    85% { top: 38%; transform: translateX(-50%) scale(1.4, 0.6); opacity: 1; }
+    100% { top: 40%; transform: translateX(-50%) scale(0.5, 0.2); opacity: 0; }
+  }
+
+  /* splash on hit */
+  .splash {
+    position: absolute;
+    top: 32%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(40px, 7vw, 70px);
+    pointer-events: none;
+    z-index: 5;
+    animation: splashAnim 0.6s ease-out forwards;
+  }
+  @keyframes splashAnim {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.4); }
+    40% { opacity: 1; transform: translate(-50%, -20px) scale(1.3); }
+    100% { opacity: 0; transform: translate(-50%, -40px) scale(1.6); }
+  }
+
+  /* celebration banner */
+  .celebrate {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%) scale(0);
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(36px, 8vw, 64px);
+    background: white;
+    padding: 18px 36px;
+    border-radius: 30px;
+    border: 6px solid currentColor;
+    box-shadow: 0 12px 30px #00000033;
+    z-index: 60;
+    text-align: center;
+    line-height: 1.1;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+  .celebrate.show {
+    animation: celebPop 2.4s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes celebPop {
+    0% { transform: translateX(-50%) scale(0) rotate(-15deg); }
+    20% { transform: translateX(-50%) scale(1.2) rotate(4deg); }
+    35% { transform: translateX(-50%) scale(1) rotate(0deg); }
+    80% { transform: translateX(-50%) scale(1) rotate(0deg); opacity: 1; }
+    100% { transform: translateX(-50%) scale(0.8) rotate(0deg); opacity: 0; }
+  }
+
+  /* dump button */
+  .dump-btn {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(24px, 5vw, 36px);
+    padding: 18px 36px;
+    border: 5px solid #581c87;
+    border-radius: 26px;
+    background: linear-gradient(180deg, #c084fc, #a855f7);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 7px 0 #581c87, 0 10px 24px #00000022;
+    text-shadow: 2px 2px 0 #00000033;
+    letter-spacing: 1px;
+    min-width: 220px;
+    min-height: 80px;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .dump-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 2px 0 #581c87, 0 4px 14px #00000022;
+  }
+
+  /* confetti */
+  .confetti {
+    position: fixed;
+    pointer-events: none;
+    z-index: 80;
+    font-size: clamp(24px, 4vw, 36px);
+    animation: confettiFall 1.6s ease-out forwards;
+  }
+  @keyframes confettiFall {
+    0% { opacity: 1; transform: translate(0,0) rotate(0deg) scale(0.6); }
+    100% { opacity: 0; transform: translate(var(--cx), 80vh) rotate(720deg) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner"><span>🎨 Color Mixer 🎨</span></div>
+
+<div class="buckets">
+  <button class="bucket bucket--red" data-color="r" aria-label="Red paint">
+    <div class="bucket-handle"></div>
+    <div class="bucket-body">
+      <div class="bucket-paint"></div>
+      <div class="bucket-band"></div>
+    </div>
+    <div class="splat">🟥</div>
+  </button>
+  <button class="bucket bucket--yellow" data-color="y" aria-label="Yellow paint">
+    <div class="bucket-handle"></div>
+    <div class="bucket-body">
+      <div class="bucket-paint"></div>
+      <div class="bucket-band"></div>
+    </div>
+    <div class="splat">🟨</div>
+  </button>
+  <button class="bucket bucket--blue" data-color="b" aria-label="Blue paint">
+    <div class="bucket-handle"></div>
+    <div class="bucket-body">
+      <div class="bucket-paint"></div>
+      <div class="bucket-band"></div>
+    </div>
+    <div class="splat">🟦</div>
+  </button>
+</div>
+
+<div class="bowl-wrap">
+  <div class="bowl-rim"></div>
+  <div class="bowl">
+    <div class="bowl-inside" id="bowlInside"></div>
+    <div class="bowl-shimmer"></div>
+  </div>
+</div>
+
+<button class="dump-btn" id="dumpBtn"><span>🪣</span>Dump it out!</button>
+
+<div class="celebrate" id="celebrate"></div>
+
+<script>
+(() => {
+  const COLORS = {
+    r: { name: 'RED',    hex: '#ef4444', emoji: '❤️' },
+    y: { name: 'YELLOW', hex: '#facc15', emoji: '💛' },
+    b: { name: 'BLUE',   hex: '#3b82f6', emoji: '💙' },
+    o: { name: 'ORANGE', hex: '#f97316', emoji: '🧡' },
+    p: { name: 'PURPLE', hex: '#8b5cf6', emoji: '💜' },
+    g: { name: 'GREEN',  hex: '#22c55e', emoji: '💚' },
+    n: { name: 'BROWN',  hex: '#8b4513', emoji: '🤎' },
+  };
+
+  const bowl = document.getElementById('bowlInside');
+  const bowlOuter = document.querySelector('.bowl');
+  const celebrate = document.getElementById('celebrate');
+  const dumpBtn = document.getElementById('dumpBtn');
+
+  // Track counts so the kid can keep tapping (caps for color naming)
+  let mix = { r: 0, y: 0, b: 0 };
+  let lastNamed = null;
+
+  function getResultKey() {
+    const r = mix.r > 0;
+    const y = mix.y > 0;
+    const b = mix.b > 0;
+    const count = [r,y,b].filter(Boolean).length;
+    if (count === 0) return null;
+    if (count === 3) return 'n'; // brown
+    if (r && y) return 'o';
+    if (r && b) return 'p';
+    if (y && b) return 'g';
+    if (r) return 'r';
+    if (y) return 'y';
+    if (b) return 'b';
+    return null;
+  }
+
+  function blendColor() {
+    const total = mix.r + mix.y + mix.b;
+    if (total === 0) return '#ffffff';
+    const key = getResultKey();
+    return COLORS[key].hex;
+  }
+
+  function update() {
+    const c = blendColor();
+    bowl.style.background = c;
+    bowlOuter.style.background = c;
+  }
+
+  function showCelebrate(key) {
+    if (!key || lastNamed === key) return;
+    lastNamed = key;
+    const c = COLORS[key];
+    celebrate.style.color = c.hex;
+    celebrate.textContent = `You made ${c.name}! ${c.emoji}`;
+    celebrate.classList.remove('show');
+    void celebrate.offsetWidth;
+    celebrate.classList.add('show');
+    confettiBurst(c.hex);
+  }
+
+  function confettiBurst(color) {
+    const emojis = ['✨','⭐','🎉','🌟','💫'];
+    for (let i = 0; i < 18; i++) {
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      c.style.left = (50 + (Math.random() * 60 - 30)) + 'vw';
+      c.style.top = '20vh';
+      c.style.color = color;
+      c.style.setProperty('--cx', (Math.random() * 600 - 300) + 'px');
+      c.style.animationDelay = (Math.random() * 0.3) + 's';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 2000);
+    }
+  }
+
+  function pourColor(key, bucket) {
+    bucket.classList.remove('tilt');
+    void bucket.offsetWidth;
+    bucket.classList.add('tilt');
+
+    // drop falls from above bowl center
+    const bowlRect = bowlOuter.getBoundingClientRect();
+    const drop = document.createElement('div');
+    drop.className = 'drop';
+    drop.style.left = (bowlRect.left + bowlRect.width / 2) + 'px';
+    drop.style.background = COLORS[key].hex;
+    drop.style.position = 'fixed';
+    drop.style.top = (bowlRect.top - 40) + 'px';
+    document.body.appendChild(drop);
+
+    setTimeout(() => {
+      mix[key]++;
+      update();
+      drop.remove();
+      // splash inside bowl
+      const splash = document.createElement('div');
+      splash.className = 'splash';
+      splash.textContent = '💧';
+      splash.style.color = COLORS[key].hex;
+      bowlOuter.appendChild(splash);
+      setTimeout(() => splash.remove(), 650);
+
+      const resKey = getResultKey();
+      // Only celebrate on mixed colors and the very first base color
+      if (resKey && (['o','p','g','n'].includes(resKey) || lastNamed === null)) {
+        showCelebrate(resKey);
+      }
+    }, 600);
+
+    setTimeout(() => bucket.classList.remove('tilt'), 750);
+  }
+
+  document.querySelectorAll('.bucket').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.dataset.color;
+      pourColor(k, btn);
+    });
+  });
+
+  dumpBtn.addEventListener('click', () => {
+    // tip animation on bowl
+    bowlOuter.animate([
+      { transform: 'rotate(0)' },
+      { transform: 'rotate(-22deg) translateX(-30px)', offset: 0.4 },
+      { transform: 'rotate(-22deg) translateX(-30px)', offset: 0.6 },
+      { transform: 'rotate(0)' }
+    ], { duration: 800, easing: 'ease-in-out' });
+
+    const bowlRect = bowlOuter.getBoundingClientRect();
+    const c = blendColor();
+    // splash drops
+    for (let i = 0; i < 10; i++) {
+      const d = document.createElement('div');
+      d.className = 'drop';
+      d.style.background = c;
+      d.style.position = 'fixed';
+      d.style.left = (bowlRect.left + Math.random() * bowlRect.width) + 'px';
+      d.style.top = (bowlRect.top + bowlRect.height * 0.4) + 'px';
+      d.style.animation = 'none';
+      d.style.transition = 'all 0.9s ease-in';
+      document.body.appendChild(d);
+      requestAnimationFrame(() => {
+        d.style.top = (window.innerHeight + 60) + 'px';
+        d.style.left = (parseFloat(d.style.left) + (Math.random() * 200 - 100)) + 'px';
+        d.style.opacity = '0';
+      });
+      setTimeout(() => d.remove(), 950);
+    }
+
+    setTimeout(() => {
+      mix = { r: 0, y: 0, b: 0 };
+      lastNamed = null;
+      update();
+    }, 400);
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>

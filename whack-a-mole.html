@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Whack-a-Mole!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Bubblegum Sans', cursive;
+    background:
+      radial-gradient(ellipse at top, #87ceeb 0%, #a0d8ef 40%, transparent 70%),
+      linear-gradient(180deg, #a0d8ef 0%, #c1e9b9 35%, #7cc470 70%, #5da653 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 12px;
+    position: relative;
+  }
+
+  /* clouds in sky */
+  .cloud {
+    position: absolute;
+    font-size: clamp(36px, 6vw, 56px);
+    opacity: 0.7;
+    top: 6%;
+    animation: cloudDrift 30s linear infinite;
+    pointer-events: none;
+  }
+  .cloud:nth-child(1) { left: -10%; animation-delay: 0s; }
+  .cloud:nth-child(2) { top: 12%; left: -10%; font-size: clamp(28px, 4vw, 42px); animation-delay: -12s; animation-duration: 40s; opacity: 0.5; }
+  .cloud:nth-child(3) { top: 18%; left: -10%; font-size: clamp(32px, 5vw, 48px); animation-delay: -22s; animation-duration: 35s; opacity: 0.6; }
+  @keyframes cloudDrift {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(120vw); }
+  }
+
+  /* HUD */
+  .hud {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+    z-index: 5;
+    position: relative;
+  }
+  .hud-pill {
+    flex: 1;
+    background: white;
+    border: 4px solid #fbbf24;
+    border-radius: 22px;
+    padding: 10px 14px;
+    text-align: center;
+    box-shadow: 0 5px 0 #00000022;
+    min-height: 70px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .hud-label {
+    font-size: clamp(14px, 2.6vw, 18px);
+    color: #b45309;
+    line-height: 1;
+  }
+  .hud-value {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(28px, 6vw, 44px);
+    color: #d97706;
+    line-height: 1;
+    text-shadow: 2px 2px 0 #fde68a;
+  }
+  .hud-pill.score { border-color: #f472b6; }
+  .hud-pill.score .hud-label { color: #be185d; }
+  .hud-pill.score .hud-value { color: #db2777; text-shadow: 2px 2px 0 #fbcfe8; }
+
+  .scorebump {
+    animation: scoreBump 0.35s ease;
+  }
+  @keyframes scoreBump {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.35) rotate(-4deg); }
+    100% { transform: scale(1); }
+  }
+
+  /* grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(10px, 2.5vw, 22px);
+    width: 100%;
+    max-width: 700px;
+    aspect-ratio: 1 / 1;
+    max-height: calc(100vh - 200px);
+    z-index: 4;
+  }
+
+  .hole {
+    position: relative;
+    background: radial-gradient(ellipse at 50% 45%, #3f2710 0%, #5a3819 38%, #7a4d24 60%, transparent 75%);
+    border-radius: 50% / 60%;
+    cursor: pointer;
+    overflow: visible;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.08s;
+  }
+  .hole::before {
+    content: '';
+    position: absolute;
+    bottom: -8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 110%;
+    height: 30%;
+    background: radial-gradient(ellipse at center, #5da653 0%, #4c8a44 60%, transparent 80%);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .critter {
+    position: absolute;
+    bottom: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(54px, 12vw, 110px);
+    line-height: 1;
+    pointer-events: none;
+    transition: bottom 0.25s cubic-bezier(.34,1.56,.64,1), transform 0.25s cubic-bezier(.34,1.56,.64,1);
+    filter: drop-shadow(0 4px 2px #00000044);
+    z-index: 2;
+    display: none;
+  }
+
+  .critter.up {
+    bottom: 22%;
+    display: block;
+  }
+
+  .critter.bonk {
+    animation: bonk 0.5s ease-in forwards;
+  }
+  @keyframes bonk {
+    0% { transform: translateX(-50%) scale(1); }
+    20% { transform: translateX(-50%) scale(1.5, 0.55); }
+    100% { transform: translateX(-50%) scale(0.2, 0.1); bottom: -10%; opacity: 0; }
+  }
+
+  /* dust poof */
+  .poof {
+    position: absolute;
+    left: 50%;
+    bottom: 20%;
+    transform: translateX(-50%);
+    font-size: clamp(34px, 6vw, 50px);
+    pointer-events: none;
+    animation: poof 0.6s ease-out forwards;
+    z-index: 3;
+  }
+  @keyframes poof {
+    0% { opacity: 0; transform: translate(-50%, 10px) scale(0.4); }
+    30% { opacity: 0.9; }
+    100% { opacity: 0; transform: translate(-50%, -30px) scale(1.4); }
+  }
+
+  /* burst particle */
+  .burst {
+    position: absolute;
+    pointer-events: none;
+    font-size: clamp(22px, 4vw, 32px);
+    z-index: 6;
+    animation: burst 0.8s ease-out forwards;
+  }
+  @keyframes burst {
+    0% { opacity: 1; transform: translate(0,0) scale(0.4) rotate(0deg); }
+    100% { opacity: 0; transform: translate(var(--bx), var(--by)) scale(1.2) rotate(var(--br)); }
+  }
+
+  /* Title banner */
+  .banner {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(28px, 6vw, 44px);
+    color: #14532d;
+    text-shadow: 3px 3px 0 #fbbf24, 5px 5px 0 #00000018;
+    text-align: center;
+    margin-bottom: 8px;
+    z-index: 5;
+  }
+  .banner span { display: inline-block; animation: wobble 2s ease-in-out infinite; }
+  @keyframes wobble {
+    0%,100% { transform: rotate(-3deg); }
+    50% { transform: rotate(3deg); }
+  }
+
+  /* start screen / end screen */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, #fef3c7ee, #fde68aee);
+    backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px;
+    gap: 24px;
+    animation: overlayIn 0.5s ease both;
+  }
+  .overlay.hidden { display: none; }
+  @keyframes overlayIn {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .overlay-title {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(40px, 9vw, 88px);
+    background: linear-gradient(135deg, #f472b6, #fb923c, #facc15, #4ade80, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    filter: drop-shadow(3px 4px 0 #00000020);
+  }
+  .overlay-emoji {
+    font-size: clamp(80px, 18vw, 160px);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.15) rotate(6deg); }
+  }
+  .overlay-score {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(48px, 12vw, 110px);
+    color: #db2777;
+    text-shadow: 4px 4px 0 #fbcfe8;
+    line-height: 1;
+  }
+  .big-btn {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(28px, 6vw, 44px);
+    padding: 24px 48px;
+    border: 6px solid #15803d;
+    border-radius: 30px;
+    background: linear-gradient(180deg, #4ade80, #22c55e);
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 8px 0 #15803d, 0 12px 30px #00000022;
+    text-shadow: 2px 2px 0 #00000033;
+    letter-spacing: 1px;
+    min-width: 240px;
+    min-height: 90px;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .big-btn:active {
+    transform: translateY(5px);
+    box-shadow: 0 3px 0 #15803d, 0 5px 15px #00000022;
+  }
+  .big-btn .btn-emoji { display: inline-block; margin-right: 10px; }
+
+  /* fireworks on win */
+  .firework {
+    position: fixed;
+    pointer-events: none;
+    font-size: clamp(30px, 5vw, 48px);
+    z-index: 101;
+    animation: fwUp 1.2s ease-out forwards;
+  }
+  @keyframes fwUp {
+    0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(1.5); }
+  }
+</style>
+</head>
+<body>
+
+<span class="cloud">☁️</span>
+<span class="cloud">☁️</span>
+<span class="cloud">☁️</span>
+
+<div class="banner"><span>🔨 Bonk the Critters! 🔨</span></div>
+
+<div class="hud">
+  <div class="hud-pill score">
+    <div class="hud-label">SCORE</div>
+    <div class="hud-value" id="score">0</div>
+  </div>
+  <div class="hud-pill">
+    <div class="hud-label">TIME</div>
+    <div class="hud-value" id="time">40</div>
+  </div>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="startScreen">
+  <div class="overlay-emoji">🐹</div>
+  <div class="overlay-title">Whack-a-Mole!</div>
+  <button class="big-btn" id="startBtn"><span class="btn-emoji">▶️</span>Start!</button>
+</div>
+
+<div class="overlay hidden" id="endScreen">
+  <div class="overlay-emoji">🏆</div>
+  <div class="overlay-title">Great Job!</div>
+  <div>You bonked</div>
+  <div class="overlay-score" id="finalScore">0</div>
+  <div>critters!</div>
+  <button class="big-btn" id="replayBtn"><span class="btn-emoji">🔁</span>Play Again!</button>
+</div>
+
+<script>
+(() => {
+  const CRITTERS = ['🐹','🐰','🐭','🐸','🦔','🐿️','🦝','🐻','🐼'];
+  const BURST_EMOJI = ['⭐','✨','💫','🌟','💥','🎉'];
+  const POOF_EMOJI = ['💨','💨','💨'];
+  const ROUND_DURATION = 40;
+  const MIN_UP_MS = 1800;
+  const MAX_UP_MS = 2600;
+  const MIN_GAP_MS = 350;
+  const MAX_GAP_MS = 900;
+  const MAX_ACTIVE = 3;
+
+  const grid = document.getElementById('grid');
+  const scoreEl = document.getElementById('score');
+  const timeEl = document.getElementById('time');
+  const startScreen = document.getElementById('startScreen');
+  const endScreen = document.getElementById('endScreen');
+  const startBtn = document.getElementById('startBtn');
+  const replayBtn = document.getElementById('replayBtn');
+  const finalScore = document.getElementById('finalScore');
+
+  let holes = [];
+  let activeCount = 0;
+  let score = 0;
+  let timeLeft = ROUND_DURATION;
+  let running = false;
+  let timers = [];
+  let countdownInterval = null;
+
+  // build grid
+  for (let i = 0; i < 9; i++) {
+    const hole = document.createElement('div');
+    hole.className = 'hole';
+    const crit = document.createElement('div');
+    crit.className = 'critter';
+    crit.textContent = CRITTERS[i % CRITTERS.length];
+    hole.appendChild(crit);
+    hole.dataset.busy = '0';
+    hole.dataset.up = '0';
+    hole.addEventListener('click', (e) => onHoleTap(hole, e));
+    grid.appendChild(hole);
+    holes.push(hole);
+  }
+
+  function rand(min, max) { return Math.random() * (max - min) + min; }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function popUp() {
+    if (!running) return;
+    if (activeCount >= MAX_ACTIVE) return;
+    const idle = holes.filter(h => h.dataset.busy === '0');
+    if (!idle.length) return;
+    const hole = pick(idle);
+    const crit = hole.querySelector('.critter');
+    crit.textContent = pick(CRITTERS);
+    crit.classList.remove('bonk');
+    crit.style.animation = '';
+    crit.style.opacity = '';
+    crit.style.display = 'block';
+    // force reflow then add 'up'
+    void crit.offsetWidth;
+    crit.classList.add('up');
+    hole.dataset.busy = '1';
+    hole.dataset.up = '1';
+    activeCount++;
+
+    const upTime = rand(MIN_UP_MS, MAX_UP_MS);
+    const t = setTimeout(() => {
+      if (hole.dataset.up === '1') {
+        // duck back down naturally
+        crit.classList.remove('up');
+        setTimeout(() => {
+          crit.style.display = 'none';
+          hole.dataset.busy = '0';
+          hole.dataset.up = '0';
+          activeCount--;
+        }, 280);
+      }
+    }, upTime);
+    timers.push(t);
+  }
+
+  function scheduleNext() {
+    if (!running) return;
+    const t = setTimeout(() => {
+      popUp();
+      scheduleNext();
+    }, rand(MIN_GAP_MS, MAX_GAP_MS));
+    timers.push(t);
+  }
+
+  function onHoleTap(hole, e) {
+    if (!running) return;
+    const rect = hole.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    if (hole.dataset.up === '1') {
+      // BONK!
+      const crit = hole.querySelector('.critter');
+      crit.classList.remove('up');
+      crit.classList.add('bonk');
+      hole.dataset.up = '0';
+      // schedule cleanup
+      setTimeout(() => {
+        crit.style.display = 'none';
+        crit.classList.remove('bonk');
+        hole.dataset.busy = '0';
+        activeCount--;
+      }, 520);
+
+      score++;
+      scoreEl.textContent = score;
+      scoreEl.classList.remove('scorebump');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('scorebump');
+
+      burstAt(cx, cy, true);
+    } else {
+      // miss → dust poof
+      const poof = document.createElement('div');
+      poof.className = 'poof';
+      poof.textContent = pick(POOF_EMOJI);
+      hole.appendChild(poof);
+      setTimeout(() => poof.remove(), 600);
+      burstAt(cx, cy, false);
+    }
+  }
+
+  function burstAt(x, y, big) {
+    const count = big ? 10 : 4;
+    for (let i = 0; i < count; i++) {
+      const b = document.createElement('div');
+      b.className = 'burst';
+      b.textContent = big ? pick(BURST_EMOJI) : '·';
+      const angle = (i / count) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = big ? rand(80, 160) : rand(30, 60);
+      b.style.left = x + 'px';
+      b.style.top = y + 'px';
+      b.style.position = 'fixed';
+      b.style.setProperty('--bx', Math.cos(angle) * dist + 'px');
+      b.style.setProperty('--by', Math.sin(angle) * dist + 'px');
+      b.style.setProperty('--br', (Math.random() * 720 - 360) + 'deg');
+      document.body.appendChild(b);
+      setTimeout(() => b.remove(), 850);
+    }
+  }
+
+  function startGame() {
+    startScreen.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    score = 0;
+    timeLeft = ROUND_DURATION;
+    scoreEl.textContent = '0';
+    timeEl.textContent = ROUND_DURATION;
+    running = true;
+    activeCount = 0;
+    holes.forEach(h => {
+      h.dataset.busy = '0';
+      h.dataset.up = '0';
+      const c = h.querySelector('.critter');
+      c.classList.remove('up','bonk');
+      c.style.display = 'none';
+    });
+    scheduleNext();
+    // first few pop up quickly
+    setTimeout(popUp, 200);
+    setTimeout(popUp, 600);
+
+    countdownInterval = setInterval(() => {
+      timeLeft--;
+      timeEl.textContent = timeLeft;
+      if (timeLeft <= 5) {
+        timeEl.style.color = '#dc2626';
+      } else {
+        timeEl.style.color = '#d97706';
+      }
+      if (timeLeft <= 0) endGame();
+    }, 1000);
+  }
+
+  function endGame() {
+    running = false;
+    clearInterval(countdownInterval);
+    timers.forEach(t => clearTimeout(t));
+    timers = [];
+    finalScore.textContent = score;
+    endScreen.classList.remove('hidden');
+    launchFireworks();
+  }
+
+  function launchFireworks() {
+    const fwEmojis = ['🎆','🎇','🌟','⭐','✨','🎉','🎊'];
+    let n = 0;
+    const fwInt = setInterval(() => {
+      for (let i = 0; i < 6; i++) {
+        const f = document.createElement('div');
+        f.className = 'firework';
+        f.textContent = fwEmojis[Math.floor(Math.random() * fwEmojis.length)];
+        f.style.left = (Math.random() * window.innerWidth) + 'px';
+        f.style.top = (Math.random() * window.innerHeight) + 'px';
+        const angle = Math.random() * Math.PI * 2;
+        const dist = rand(80, 200);
+        f.style.setProperty('--fx', Math.cos(angle) * dist + 'px');
+        f.style.setProperty('--fy', Math.sin(angle) * dist + 'px');
+        document.body.appendChild(f);
+        setTimeout(() => f.remove(), 1300);
+      }
+      n++;
+      if (n > 6) clearInterval(fwInt);
+    }, 400);
+  }
+
+  startBtn.addEventListener('click', startGame);
+  replayBtn.addEventListener('click', startGame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Monster Builder!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Bubblegum Sans', cursive;
+    background:
+      radial-gradient(ellipse at 20% 30%, #fbcfe8 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 70%, #c7d2fe 0%, transparent 40%),
+      linear-gradient(180deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 12px;
+    position: relative;
+  }
+
+  .banner {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(26px, 5.5vw, 40px);
+    color: #6b21a8;
+    text-shadow: 3px 3px 0 #fbcfe8, 5px 5px 0 #00000018;
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .banner span { display: inline-block; animation: wobble 2.4s ease-in-out infinite; }
+  @keyframes wobble {
+    0%,100% { transform: rotate(-3deg) translateY(0); }
+    50% { transform: rotate(3deg) translateY(-4px); }
+  }
+
+  /* MONSTER FACE */
+  .stage {
+    position: relative;
+    width: clamp(280px, 78vw, 460px);
+    aspect-ratio: 1 / 1;
+    margin: 4px auto 8px;
+  }
+
+  .monster {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(160deg, #a78bfa 0%, #8b5cf6 60%, #7c3aed 100%);
+    border-radius: 48% 52% 44% 56% / 56% 50% 50% 44%;
+    box-shadow:
+      inset -20px -30px 50px #00000033,
+      inset 20px 25px 30px #ffffff33,
+      0 14px 30px #00000033;
+    overflow: visible;
+    animation: idleBob 3.5s ease-in-out infinite;
+  }
+  @keyframes idleBob {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-6px) rotate(1deg); }
+  }
+
+  .monster.shake {
+    animation: shakeAnim 0.6s ease-in-out;
+  }
+  @keyframes shakeAnim {
+    0%, 100% { transform: translate(0,0) rotate(0); }
+    10% { transform: translate(-10px, -4px) rotate(-3deg); }
+    20% { transform: translate(8px, 4px) rotate(3deg); }
+    30% { transform: translate(-8px, 4px) rotate(-2deg); }
+    40% { transform: translate(8px, -3px) rotate(2deg); }
+    50% { transform: translate(-6px, 4px) rotate(-2deg); }
+    60% { transform: translate(6px, -2px) rotate(2deg); }
+    70% { transform: translate(-4px, 2px) rotate(-1deg); }
+    80% { transform: translate(4px, -2px) rotate(1deg); }
+  }
+
+  /* cheek spots */
+  .monster::before, .monster::after {
+    content: '';
+    position: absolute;
+    width: 22%;
+    height: 18%;
+    background: radial-gradient(circle, #f472b699, transparent 70%);
+    border-radius: 50%;
+    top: 56%;
+  }
+  .monster::before { left: 10%; }
+  .monster::after { right: 10%; }
+
+  /* part slots on the face */
+  .slot {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 5;
+    transition: transform 0.05s;
+  }
+  .slot-eyes {
+    top: 24%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    font-size: clamp(50px, 14vw, 90px);
+    gap: 12px;
+  }
+  .slot-nose {
+    top: 44%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(34px, 8vw, 60px);
+  }
+  .slot-mouth {
+    top: 58%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(46px, 12vw, 80px);
+  }
+  .slot-hat {
+    top: -22%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: clamp(70px, 18vw, 120px);
+  }
+
+  .slot .part {
+    display: inline-block;
+    animation: partLand 0.5s cubic-bezier(.34,1.78,.64,1) both;
+    filter: drop-shadow(0 4px 6px #00000044);
+  }
+  @keyframes partLand {
+    0% { transform: translateY(-80px) scale(0.3) rotate(-30deg); opacity: 0; }
+    60% { transform: translateY(0) scale(1.3) rotate(8deg); opacity: 1; }
+    80% { transform: translateY(0) scale(0.92) rotate(-3deg); }
+    100% { transform: translateY(0) scale(1) rotate(0); }
+  }
+
+  /* category tabs */
+  .tabs {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 4px;
+    z-index: 6;
+  }
+  .tab {
+    flex: 1;
+    min-height: 60px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(14px, 3vw, 20px);
+    border: 4px solid #6b21a8;
+    border-bottom: none;
+    border-radius: 16px 16px 0 0;
+    background: #e9d5ff;
+    color: #6b21a8;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.1;
+    gap: 2px;
+    transition: background 0.15s, transform 0.1s;
+  }
+  .tab .tab-emoji {
+    font-size: clamp(20px, 4vw, 30px);
+    line-height: 1;
+  }
+  .tab.active {
+    background: white;
+    color: #7c3aed;
+    transform: translateY(0);
+    box-shadow: 0 -4px 0 #c084fc inset;
+  }
+  .tab:not(.active):active { transform: translateY(2px); }
+
+  /* part tray */
+  .tray {
+    width: 100%;
+    max-width: 600px;
+    background: white;
+    border: 4px solid #6b21a8;
+    border-radius: 0 0 24px 24px;
+    padding: 14px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    box-shadow: 0 8px 0 #6b21a833, 0 16px 30px #00000022;
+    z-index: 6;
+  }
+  @media (max-width: 480px) {
+    .tray { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  .part-btn {
+    aspect-ratio: 1 / 1;
+    border: 3px solid #e9d5ff;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #faf5ff, #f3e8ff);
+    font-size: clamp(34px, 6vw, 46px);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: transform 0.1s, border-color 0.1s, background 0.1s;
+    min-height: 60px;
+  }
+  .part-btn:active {
+    transform: scale(0.9);
+    border-color: #a855f7;
+    background: linear-gradient(180deg, #f3e8ff, #e9d5ff);
+  }
+  .part-btn.selected {
+    border-color: #a855f7;
+    background: linear-gradient(180deg, #fef3c7, #fde68a);
+    box-shadow: inset 0 0 0 3px #fbbf24;
+  }
+
+  /* action buttons */
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+    width: 100%;
+    max-width: 600px;
+    z-index: 6;
+  }
+  .action-btn {
+    flex: 1;
+    min-height: 78px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(18px, 4vw, 28px);
+    border: 5px solid;
+    border-radius: 24px;
+    padding: 10px 16px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    text-shadow: 2px 2px 0 #00000033;
+    letter-spacing: 1px;
+    color: white;
+    box-shadow: 0 6px 0 #00000044, 0 10px 20px #00000022;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .action-btn:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #00000044, 0 4px 10px #00000022;
+  }
+  .action-btn--shake {
+    background: linear-gradient(180deg, #facc15, #f59e0b);
+    border-color: #b45309;
+  }
+  .action-btn--clear {
+    background: linear-gradient(180deg, #fb7185, #ef4444);
+    border-color: #991b1b;
+  }
+  .action-btn .em { font-size: 1.3em; }
+
+  /* particle when slap */
+  .slap-fx {
+    position: fixed;
+    pointer-events: none;
+    font-size: clamp(20px, 3vw, 28px);
+    z-index: 50;
+    animation: slapFx 0.6s ease-out forwards;
+  }
+  @keyframes slapFx {
+    0% { opacity: 1; transform: translate(0,0) scale(0.4); }
+    100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(1.3) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner"><span>👹 Make a Monster! 👹</span></div>
+
+<div class="stage">
+  <div class="monster" id="monster">
+    <div class="slot slot-hat" id="slot-hat"></div>
+    <div class="slot slot-eyes" id="slot-eyes"></div>
+    <div class="slot slot-nose" id="slot-nose"></div>
+    <div class="slot slot-mouth" id="slot-mouth"></div>
+  </div>
+</div>
+
+<div class="tabs" id="tabs"></div>
+<div class="tray" id="tray"></div>
+
+<div class="actions">
+  <button class="action-btn action-btn--shake" id="shakeBtn"><span class="em">🎲</span>Shake!</button>
+  <button class="action-btn action-btn--clear" id="clearBtn"><span class="em">🧹</span>Clear</button>
+</div>
+
+<script>
+(() => {
+  const CATEGORIES = [
+    { key: 'eyes',  label: 'Eyes',  emoji: '👀', options: ['👁️','👀','😎','🤩','😵','🥸'] },
+    { key: 'nose',  label: 'Nose',  emoji: '👃', options: ['👃','🐽','🌽','🍓','☃️','🍒'] },
+    { key: 'mouth', label: 'Mouth', emoji: '👄', options: ['👄','😁','😝','😮','🦷','😋'] },
+    { key: 'hat',   label: 'Hat',   emoji: '🎩', options: ['🎩','👑','🧢','🎓','🪖','🤠'] },
+  ];
+
+  const tabs = document.getElementById('tabs');
+  const tray = document.getElementById('tray');
+  const monster = document.getElementById('monster');
+  const slots = {
+    eyes:  document.getElementById('slot-eyes'),
+    nose:  document.getElementById('slot-nose'),
+    mouth: document.getElementById('slot-mouth'),
+    hat:   document.getElementById('slot-hat'),
+  };
+
+  let activeCat = CATEGORIES[0];
+  let chosen = {}; // { eyes: '👀', ... }
+
+  // Build tabs
+  CATEGORIES.forEach((cat, i) => {
+    const t = document.createElement('button');
+    t.className = 'tab' + (i === 0 ? ' active' : '');
+    t.innerHTML = `<span class="tab-emoji">${cat.emoji}</span><span>${cat.label}</span>`;
+    t.addEventListener('click', () => selectCategory(cat));
+    tabs.appendChild(t);
+  });
+
+  function selectCategory(cat) {
+    activeCat = cat;
+    Array.from(tabs.children).forEach((el, i) => {
+      el.classList.toggle('active', CATEGORIES[i].key === cat.key);
+    });
+    renderTray();
+  }
+
+  function renderTray() {
+    tray.innerHTML = '';
+    activeCat.options.forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'part-btn';
+      b.textContent = opt;
+      if (chosen[activeCat.key] === opt) b.classList.add('selected');
+      b.addEventListener('click', (e) => applyPart(activeCat.key, opt, e));
+      tray.appendChild(b);
+    });
+  }
+
+  function applyPart(catKey, opt, evt) {
+    chosen[catKey] = opt;
+    drawSlot(catKey);
+    renderTray();
+    // small fx
+    if (evt) {
+      const r = evt.currentTarget.getBoundingClientRect();
+      slapParticles(r.left + r.width/2, r.top + r.height/2);
+    }
+  }
+
+  function drawSlot(catKey) {
+    const slot = slots[catKey];
+    const val = chosen[catKey];
+    if (!val) { slot.innerHTML = ''; return; }
+    slot.innerHTML = '';
+    if (catKey === 'eyes') {
+      // two eyes side by side
+      const a = document.createElement('span'); a.className='part'; a.textContent = val;
+      const b = document.createElement('span'); b.className='part'; b.textContent = val; b.style.animationDelay = '0.08s';
+      slot.appendChild(a); slot.appendChild(b);
+    } else {
+      const s = document.createElement('span'); s.className='part'; s.textContent = val;
+      slot.appendChild(s);
+    }
+  }
+
+  function slapParticles(x, y) {
+    const emojis = ['✨','💫','⭐','💥','💖'];
+    for (let i = 0; i < 6; i++) {
+      const e = document.createElement('div');
+      e.className = 'slap-fx';
+      e.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      e.style.left = x + 'px';
+      e.style.top = y + 'px';
+      e.style.position = 'fixed';
+      const a = (i / 6) * Math.PI * 2;
+      const d = 50 + Math.random() * 40;
+      e.style.setProperty('--sx', Math.cos(a) * d + 'px');
+      e.style.setProperty('--sy', Math.sin(a) * d + 'px');
+      document.body.appendChild(e);
+      setTimeout(() => e.remove(), 650);
+    }
+  }
+
+  document.getElementById('shakeBtn').addEventListener('click', () => {
+    CATEGORIES.forEach(cat => {
+      chosen[cat.key] = cat.options[Math.floor(Math.random() * cat.options.length)];
+    });
+    monster.classList.remove('shake');
+    void monster.offsetWidth;
+    monster.classList.add('shake');
+    CATEGORIES.forEach((cat, i) => {
+      setTimeout(() => drawSlot(cat.key), i * 90);
+    });
+    renderTray();
+  });
+
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    chosen = {};
+    Object.keys(slots).forEach(k => {
+      const slot = slots[k];
+      // pop-off animation
+      Array.from(slot.children).forEach((c, i) => {
+        c.style.animation = `partOff 0.4s ease-in forwards`;
+        c.style.animationDelay = (i * 0.05) + 's';
+      });
+    });
+    setTimeout(() => {
+      Object.keys(slots).forEach(k => slots[k].innerHTML = '');
+      renderTray();
+    }, 480);
+  });
+
+  // dynamic partOff animation
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = `
+    @keyframes partOff {
+      0% { transform: translateY(0) scale(1) rotate(0); opacity: 1; }
+      100% { transform: translateY(-120px) scale(0.4) rotate(-90deg); opacity: 0; }
+    }
+  `;
+  document.head.appendChild(styleSheet);
+
+  // start with default monster
+  chosen = { eyes: '👀', nose: '👃', mouth: '😁' };
+  CATEGORIES.forEach(c => drawSlot(c.key));
+  renderTray();
+})();
+</script>
+</body>
+</html>

@@ -228,6 +228,12 @@
   .card:nth-child(1) { animation-delay: 0.3s; }
   .card:nth-child(2) { animation-delay: 0.5s; }
   .card:nth-child(3) { animation-delay: 0.7s; }
+  .card:nth-child(4) { animation-delay: 0.9s; }
+  .card:nth-child(5) { animation-delay: 1.1s; }
+  .card:nth-child(6) { animation-delay: 1.3s; }
+  .card:nth-child(7) { animation-delay: 1.5s; }
+  .card:nth-child(8) { animation-delay: 1.7s; }
+  .card:nth-child(9) { animation-delay: 1.9s; }
 
   @keyframes cardPop {
     0% { opacity: 0; transform: translateY(60px) scale(0.7) rotate(-3deg); }
@@ -262,6 +268,42 @@
   }
   .card--balloon:hover { border-color: #818cf8; }
 
+  .card--whack {
+    background: linear-gradient(145deg, #fef3c7, #fde68a);
+    border: 4px solid #fcd34d;
+  }
+  .card--whack:hover { border-color: #fbbf24; }
+
+  .card--mixer {
+    background: linear-gradient(145deg, #ffedd5, #fed7aa);
+    border: 4px solid #fdba74;
+  }
+  .card--mixer:hover { border-color: #fb923c; }
+
+  .card--bubble {
+    background: linear-gradient(145deg, #cffafe, #a5f3fc);
+    border: 4px solid #67e8f9;
+  }
+  .card--bubble:hover { border-color: #22d3ee; }
+
+  .card--monster {
+    background: linear-gradient(145deg, #f3e8ff, #e9d5ff);
+    border: 4px solid #c4b5fd;
+  }
+  .card--monster:hover { border-color: #a855f7; }
+
+  .card--rocket {
+    background: linear-gradient(145deg, #ffe4e6, #fecdd3);
+    border: 4px solid #fda4af;
+  }
+  .card--rocket:hover { border-color: #fb7185; }
+
+  .card--drum {
+    background: linear-gradient(145deg, #ccfbf1, #99f6e4);
+    border: 4px solid #5eead4;
+  }
+  .card--drum:hover { border-color: #14b8a6; }
+
   /* card icon */
   .card-icon {
     font-size: 72px;
@@ -277,6 +319,12 @@
   .card--button .card-icon { animation: gentleBounce 3s ease-in-out infinite; }
   .card--egg .card-icon { animation: gentleWobble 2.5s ease-in-out infinite 0.4s; }
   .card--balloon .card-icon { animation: gentleFloat 3.5s ease-in-out infinite 0.8s; }
+  .card--whack .card-icon { animation: gentleWobble 2.2s ease-in-out infinite 0.2s; }
+  .card--mixer .card-icon { animation: gentleBounce 2.8s ease-in-out infinite 0.5s; }
+  .card--bubble .card-icon { animation: gentleFloat 3s ease-in-out infinite 0.3s; }
+  .card--monster .card-icon { animation: gentleWobble 2.6s ease-in-out infinite 0.6s; }
+  .card--rocket .card-icon { animation: gentleFloat 3.2s ease-in-out infinite 0.1s; }
+  .card--drum .card-icon { animation: gentleBounce 2.4s ease-in-out infinite 0.7s; }
 
   @keyframes gentleBounce {
     0%, 100% { transform: translateY(0); }
@@ -301,6 +349,12 @@
   .card--button .card-title { color: #be185d; }
   .card--egg .card-title { color: #15803d; }
   .card--balloon .card-title { color: #4338ca; }
+  .card--whack .card-title { color: #b45309; }
+  .card--mixer .card-title { color: #9a3412; }
+  .card--bubble .card-title { color: #0e7490; }
+  .card--monster .card-title { color: #6b21a8; }
+  .card--rocket .card-title { color: #9f1239; }
+  .card--drum .card-title { color: #0f766e; }
 
   .card-desc {
     font-size: clamp(14px, 2.8vw, 17px);
@@ -311,6 +365,12 @@
   .card--button .card-desc { color: #9d174d; }
   .card--egg .card-desc { color: #166534; }
   .card--balloon .card-desc { color: #3730a3; }
+  .card--whack .card-desc { color: #92400e; }
+  .card--mixer .card-desc { color: #7c2d12; }
+  .card--bubble .card-desc { color: #155e75; }
+  .card--monster .card-desc { color: #581c87; }
+  .card--rocket .card-desc { color: #881337; }
+  .card--drum .card-desc { color: #115e59; }
 
   /* sparkle dots in card corners */
   .card-sparkle {
@@ -324,6 +384,12 @@
   .card--button .card-sparkle { background: #f472b6; }
   .card--egg .card-sparkle { background: #4ade80; }
   .card--balloon .card-sparkle { background: #818cf8; }
+  .card--whack .card-sparkle { background: #fbbf24; }
+  .card--mixer .card-sparkle { background: #fb923c; }
+  .card--bubble .card-sparkle { background: #22d3ee; }
+  .card--monster .card-sparkle { background: #a855f7; }
+  .card--rocket .card-sparkle { background: #fb7185; }
+  .card--drum .card-sparkle { background: #14b8a6; }
 
   .card-sparkle:nth-of-type(1) { top: 12px; right: 14px; animation-delay: 0s; }
   .card-sparkle:nth-of-type(2) { bottom: 14px; left: 16px; animation-delay: 0.7s; width: 6px; height: 6px; }
@@ -425,6 +491,72 @@
       <div class="card-icon">🎈</div>
       <div class="card-title">Pop a Balloon!</div>
       <div class="card-desc">Blow it up bigger and bigger until... POP!</div>
+    </a>
+
+    <!-- Card 4: Whack-a-Mole -->
+    <a class="card card--whack" href="whack-a-mole.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">🔨</div>
+      <div class="card-title">Whack-a-Mole</div>
+      <div class="card-desc">Bonk the critters when they pop out of their holes!</div>
+    </a>
+
+    <!-- Card 5: Color Mixer -->
+    <a class="card card--mixer" href="color-mixer.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">🎨</div>
+      <div class="card-title">Color Mixer</div>
+      <div class="card-desc">Pour paints together and make brand new colors!</div>
+    </a>
+
+    <!-- Card 6: Bubble Pop -->
+    <a class="card card--bubble" href="bubble-pop.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">🫧</div>
+      <div class="card-title">Bubble Pop</div>
+      <div class="card-desc">Tap the floating bubbles and watch them burst!</div>
+    </a>
+
+    <!-- Card 7: Monster Builder -->
+    <a class="card card--monster" href="monster-builder.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">👹</div>
+      <div class="card-title">Monster Maker</div>
+      <div class="card-desc">Mix and match silly faces to build a goofy monster!</div>
+    </a>
+
+    <!-- Card 8: Rocket Launch -->
+    <a class="card card--rocket" href="rocket-launch.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">🚀</div>
+      <div class="card-title">Rocket Launch!</div>
+      <div class="card-desc">Tap to fuel the rocket and blast off to the moon!</div>
+    </a>
+
+    <!-- Card 9: Drum Pad -->
+    <a class="card card--drum" href="drum-pad.html">
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <span class="card-sparkle"></span>
+      <div class="card-icon">🥁</div>
+      <div class="card-title">Drum Pad</div>
+      <div class="card-desc">Smash the colorful pads for a wild visual party!</div>
     </a>
 
   </div>

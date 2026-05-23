@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Drum Pad!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Bubblegum Sans', cursive;
+    background: linear-gradient(180deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+  }
+
+  /* background sparkles */
+  .bg-sparkle {
+    position: absolute;
+    color: white;
+    pointer-events: none;
+    animation: bgTwinkle 3s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes bgTwinkle {
+    0%, 100% { opacity: 0.15; transform: scale(0.6); }
+    50% { opacity: 0.5; transform: scale(1.1); }
+  }
+
+  /* PAD GRID */
+  .pads {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 1fr);
+    gap: clamp(10px, 2vw, 18px);
+    position: relative;
+    z-index: 2;
+  }
+
+  .pad {
+    position: relative;
+    border-radius: clamp(18px, 4vw, 32px);
+    cursor: pointer;
+    border: 6px solid #ffffff44;
+    -webkit-tap-highlight-color: transparent;
+    overflow: visible;
+    box-shadow:
+      inset 0 -10px 30px #00000033,
+      inset 0 10px 30px #ffffff33,
+      0 10px 0 #00000044,
+      0 18px 40px #00000033;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(50px, 12vw, 90px);
+    line-height: 1;
+    transition: transform 0.06s, box-shadow 0.06s, filter 0.15s;
+  }
+
+  .pad.tap {
+    animation: padTap 0.4s ease-out;
+  }
+  @keyframes padTap {
+    0% { transform: scale(1); filter: brightness(1); }
+    20% { transform: scale(0.88); filter: brightness(1.6); }
+    100% { transform: scale(1); filter: brightness(1); }
+  }
+
+  .pad--red {
+    background: linear-gradient(160deg, #fca5a5 0%, #ef4444 60%, #b91c1c 100%);
+  }
+  .pad--orange {
+    background: linear-gradient(160deg, #fdba74 0%, #f97316 60%, #c2410c 100%);
+  }
+  .pad--yellow {
+    background: linear-gradient(160deg, #fde047 0%, #eab308 60%, #a16207 100%);
+  }
+  .pad--green {
+    background: linear-gradient(160deg, #86efac 0%, #22c55e 60%, #15803d 100%);
+  }
+  .pad--blue {
+    background: linear-gradient(160deg, #93c5fd 0%, #3b82f6 60%, #1d4ed8 100%);
+  }
+  .pad--purple {
+    background: linear-gradient(160deg, #d8b4fe 0%, #a855f7 60%, #6b21a8 100%);
+  }
+
+  .pad-emoji {
+    font-size: clamp(50px, 13vw, 100px);
+    filter: drop-shadow(0 4px 4px #00000055);
+    pointer-events: none;
+    transition: transform 0.2s;
+  }
+
+  /* effects */
+  .fx {
+    position: fixed;
+    pointer-events: none;
+    z-index: 30;
+    font-size: clamp(28px, 5vw, 44px);
+    animation: fxBurst 0.9s ease-out forwards;
+  }
+  @keyframes fxBurst {
+    0% { opacity: 1; transform: translate(0,0) scale(0.4) rotate(0); }
+    100% { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(1.4) rotate(var(--fr)); }
+  }
+
+  /* combo full-screen */
+  .combo-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .combo-overlay.show {
+    opacity: 1;
+    animation: comboFlash 1.8s ease;
+  }
+  @keyframes comboFlash {
+    0%, 100% { background: transparent; }
+    20% { background: rgba(255,255,255,0.5); }
+    40% { background: rgba(255,236,108,0.3); }
+    60% { background: rgba(244,114,182,0.3); }
+    80% { background: rgba(96,165,250,0.3); }
+  }
+  .combo-text {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(60px, 14vw, 140px);
+    background: linear-gradient(135deg, #f472b6, #fb923c, #facc15, #4ade80, #60a5fa, #c084fc);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 6px 6px 0 #00000033;
+    filter: drop-shadow(0 0 30px #ffffff);
+    animation: comboShift 1.2s ease-in-out, comboGrow 1.6s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes comboShift {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+  @keyframes comboGrow {
+    0% { transform: scale(0) rotate(-15deg); }
+    50% { transform: scale(1.2) rotate(5deg); }
+    70% { transform: scale(1) rotate(-2deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+
+  /* combo confetti rain */
+  .combo-particle {
+    position: fixed;
+    pointer-events: none;
+    z-index: 90;
+    font-size: clamp(28px, 5vw, 44px);
+    animation: comboFall 2s ease-out forwards;
+  }
+  @keyframes comboFall {
+    0% { opacity: 0; transform: translate(0, -50px) rotate(0); }
+    10% { opacity: 1; }
+    100% { opacity: 1; transform: translate(var(--cpx), 110vh) rotate(720deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="pads" id="pads">
+  <button class="pad pad--red" data-key="red" aria-label="Red pad">
+    <span class="pad-emoji">⭐</span>
+  </button>
+  <button class="pad pad--orange" data-key="orange" aria-label="Orange pad">
+    <span class="pad-emoji">❤️</span>
+  </button>
+  <button class="pad pad--yellow" data-key="yellow" aria-label="Yellow pad">
+    <span class="pad-emoji">⚡</span>
+  </button>
+  <button class="pad pad--green" data-key="green" aria-label="Green pad">
+    <span class="pad-emoji">🫧</span>
+  </button>
+  <button class="pad pad--blue" data-key="blue" aria-label="Blue pad">
+    <span class="pad-emoji">🎆</span>
+  </button>
+  <button class="pad pad--purple" data-key="purple" aria-label="Purple pad">
+    <span class="pad-emoji">🎉</span>
+  </button>
+</div>
+
+<div class="combo-overlay" id="comboOverlay">
+  <div class="combo-text">PARTY TIME!</div>
+</div>
+
+<script>
+(() => {
+  // Background sparkles
+  for (let i = 0; i < 40; i++) {
+    const s = document.createElement('div');
+    s.className = 'bg-sparkle';
+    s.textContent = Math.random() > 0.5 ? '✨' : '⭐';
+    s.style.left = Math.random() * 100 + 'vw';
+    s.style.top = Math.random() * 100 + 'vh';
+    s.style.fontSize = (10 + Math.random() * 18) + 'px';
+    s.style.animationDelay = (Math.random() * 3) + 's';
+    document.body.appendChild(s);
+  }
+
+  const EFFECTS = {
+    red:    { emojis: ['⭐','🌟','✨','💫'],          count: 14 },
+    orange: { emojis: ['❤️','💖','💕','💗','💓'],     count: 14 },
+    yellow: { emojis: ['⚡','🌩️','✨','💥'],          count: 14 },
+    green:  { emojis: ['🫧','💧','🌀'],               count: 14 },
+    blue:   { emojis: ['🎆','🎇','💥','✨'],          count: 14 },
+    purple: { emojis: ['🎉','🎊','🪅','🌈'],          count: 14 },
+  };
+
+  const pads = document.querySelectorAll('.pad');
+  const tapHistory = []; // [{key, time}]
+  const comboOverlay = document.getElementById('comboOverlay');
+  let comboActive = false;
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function tapPad(pad) {
+    pad.classList.remove('tap');
+    void pad.offsetWidth;
+    pad.classList.add('tap');
+
+    const key = pad.dataset.key;
+    const rect = pad.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    // burst effect
+    const cfg = EFFECTS[key];
+    for (let i = 0; i < cfg.count; i++) {
+      const f = document.createElement('div');
+      f.className = 'fx';
+      f.textContent = pick(cfg.emojis);
+      f.style.left = cx + 'px';
+      f.style.top = cy + 'px';
+      const a = (i / cfg.count) * Math.PI * 2 + Math.random() * 0.3;
+      const dist = rand(80, 200);
+      f.style.setProperty('--fx', Math.cos(a) * dist + 'px');
+      f.style.setProperty('--fy', Math.sin(a) * dist + 'px');
+      f.style.setProperty('--fr', (Math.random() * 720 - 360) + 'deg');
+      f.style.animationDuration = (0.7 + Math.random() * 0.5) + 's';
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 1300);
+    }
+
+    // record tap for combo
+    const now = Date.now();
+    tapHistory.push({ key, time: now });
+    // prune old (> 3s)
+    while (tapHistory.length && now - tapHistory[0].time > 3000) {
+      tapHistory.shift();
+    }
+    // check if all 6 unique pads tapped within window
+    const unique = new Set(tapHistory.map(t => t.key));
+    if (unique.size === 6 && !comboActive) {
+      triggerCombo();
+    }
+  }
+
+  function triggerCombo() {
+    comboActive = true;
+    comboOverlay.classList.remove('show');
+    void comboOverlay.offsetWidth;
+    comboOverlay.classList.add('show');
+
+    const emojis = ['🎉','🎊','🌟','⭐','✨','💖','💫','🎆','🎇','🌈','🪅','💥'];
+    for (let i = 0; i < 80; i++) {
+      const p = document.createElement('div');
+      p.className = 'combo-particle';
+      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      p.style.left = Math.random() * 100 + 'vw';
+      p.style.top = '-50px';
+      p.style.setProperty('--cpx', (Math.random() * 200 - 100) + 'px');
+      p.style.animationDelay = (Math.random() * 0.5) + 's';
+      p.style.animationDuration = (1.5 + Math.random() * 1.5) + 's';
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 3500);
+    }
+
+    setTimeout(() => {
+      comboOverlay.classList.remove('show');
+      comboActive = false;
+      tapHistory.length = 0;
+    }, 2000);
+  }
+
+  pads.forEach(p => p.addEventListener('click', () => tapPad(p)));
+
+  // also allow keyboard fun
+  const keyMap = {'1':0,'2':1,'3':2,'4':3,'5':4,'6':5,'q':0,'w':1,'e':2,'a':3,'s':4,'d':5};
+  document.addEventListener('keydown', (e) => {
+    const k = e.key.toLowerCase();
+    if (keyMap[k] !== undefined) {
+      tapPad(pads[keyMap[k]]);
+    }
+  });
+})();
+</script>
+</body>
+</html>

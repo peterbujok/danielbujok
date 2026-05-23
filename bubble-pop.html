@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Bubble Pop!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; overflow: hidden; }
+
+  body {
+    font-family: 'Bubblegum Sans', cursive;
+    background:
+      radial-gradient(ellipse at 30% 20%, #cffafe 0%, transparent 40%),
+      radial-gradient(ellipse at 70% 80%, #ddd6fe 0%, transparent 50%),
+      linear-gradient(180deg, #a5f3fc 0%, #38bdf8 50%, #0ea5e9 100%);
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    position: relative;
+  }
+
+  /* sea decorations */
+  .sea-deco {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+  }
+  .seaweed {
+    position: absolute;
+    bottom: -10px;
+    font-size: clamp(60px, 8vw, 100px);
+    animation: sway 3s ease-in-out infinite;
+    transform-origin: bottom center;
+    opacity: 0.7;
+  }
+  .seaweed:nth-child(1) { left: 5%; animation-delay: 0s; }
+  .seaweed:nth-child(2) { left: 25%; font-size: clamp(48px, 6vw, 80px); animation-delay: 0.5s; opacity: 0.5; }
+  .seaweed:nth-child(3) { right: 8%; animation-delay: 1s; }
+  .seaweed:nth-child(4) { right: 30%; font-size: clamp(50px, 6vw, 80px); animation-delay: 0.3s; opacity: 0.55; }
+  @keyframes sway {
+    0%,100% { transform: rotate(-8deg); }
+    50% { transform: rotate(8deg); }
+  }
+
+  .fish {
+    position: absolute;
+    font-size: clamp(28px, 4vw, 44px);
+    opacity: 0.6;
+    animation: swim 25s linear infinite;
+    pointer-events: none;
+  }
+  .fish:nth-child(5)  { top: 35%; animation-delay: -3s; }
+  .fish:nth-child(6)  { top: 55%; animation-delay: -12s; animation-duration: 30s; }
+  .fish:nth-child(7)  { top: 70%; animation-delay: -18s; font-size: clamp(22px, 3vw, 36px); }
+  @keyframes swim {
+    0% { transform: translateX(-100px) scaleX(1); left: 0; }
+    49% { transform: translateX(calc(100vw + 100px)) scaleX(1); }
+    50% { transform: translateX(calc(100vw + 100px)) scaleX(-1); }
+    99% { transform: translateX(-100px) scaleX(-1); }
+    100% { transform: translateX(-100px) scaleX(1); }
+  }
+
+  /* HUD */
+  .counter {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border: 5px solid #f472b6;
+    border-radius: 30px;
+    padding: 10px 26px;
+    font-family: 'Lilita One', sans-serif;
+    box-shadow: 0 6px 0 #00000022, 0 12px 30px #00000022;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 64px;
+  }
+  .counter-icon {
+    font-size: clamp(28px, 4vw, 38px);
+  }
+  .counter-num {
+    font-size: clamp(32px, 6vw, 46px);
+    color: #db2777;
+    text-shadow: 2px 2px 0 #fbcfe8;
+    line-height: 1;
+    min-width: 50px;
+    text-align: center;
+  }
+  .counter-num.pop {
+    animation: counterPop 0.4s ease;
+  }
+  @keyframes counterPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.4) rotate(-5deg); }
+    100% { transform: scale(1); }
+  }
+
+  /* BUBBLE */
+  .bubble {
+    position: absolute;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow:
+      inset -10px -12px 18px rgba(255,255,255,0.3),
+      inset 12px 14px 22px rgba(255,255,255,0.55),
+      0 0 25px rgba(255,255,255,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 5;
+    will-change: transform;
+  }
+  .bubble::before {
+    content: '';
+    position: absolute;
+    top: 15%;
+    left: 18%;
+    width: 28%;
+    height: 22%;
+    background: rgba(255,255,255,0.85);
+    border-radius: 50%;
+    filter: blur(2px);
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    left: 30%;
+    width: 8%;
+    height: 6%;
+    background: rgba(255,255,255,0.95);
+    border-radius: 50%;
+  }
+
+  /* pop animation */
+  .bubble.pop {
+    animation: bubblePop 0.4s ease-out forwards;
+  }
+  @keyframes bubblePop {
+    0% { transform: scale(1); opacity: 1; }
+    40% { transform: scale(1.4); opacity: 0.8; }
+    100% { transform: scale(0.2); opacity: 0; }
+  }
+
+  /* droplets that scatter on pop */
+  .droplet {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 6;
+    animation: dropletFly 0.6s ease-out forwards;
+    box-shadow: inset -2px -3px 0 rgba(0,0,0,0.1);
+  }
+  @keyframes dropletFly {
+    0% { opacity: 1; transform: translate(0,0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+  }
+</style>
+</head>
+<body>
+
+<div class="sea-deco">
+  <span class="seaweed">🌿</span>
+  <span class="seaweed">🌿</span>
+  <span class="seaweed">🌱</span>
+  <span class="seaweed">🌿</span>
+  <span class="fish">🐠</span>
+  <span class="fish">🐟</span>
+  <span class="fish">🦑</span>
+</div>
+
+<div class="counter">
+  <span class="counter-icon">🫧</span>
+  <span class="counter-num" id="count">0</span>
+</div>
+
+<script>
+(() => {
+  const COLORS = [
+    { fill: 'radial-gradient(circle at 35% 30%, #fce7f3aa, #f9a8d488)', drop: '#f9a8d4' },
+    { fill: 'radial-gradient(circle at 35% 30%, #dbeafeaa, #93c5fd88)', drop: '#93c5fd' },
+    { fill: 'radial-gradient(circle at 35% 30%, #d1fae5aa, #6ee7b788)', drop: '#6ee7b7' },
+    { fill: 'radial-gradient(circle at 35% 30%, #fef3c7aa, #fde68a88)', drop: '#fde68a' },
+    { fill: 'radial-gradient(circle at 35% 30%, #ede9feaa, #c4b5fd88)', drop: '#c4b5fd' },
+    { fill: 'radial-gradient(circle at 35% 30%, #ffedd5aa, #fdba7488)', drop: '#fdba74' },
+    { fill: 'radial-gradient(circle at 35% 30%, #ccfbf1aa, #5eead488)', drop: '#5eead4' },
+  ];
+
+  const counter = document.getElementById('count');
+  let count = 0;
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function spawnBubble() {
+    const size = rand(70, 150);
+    const startX = rand(size/2, window.innerWidth - size/2);
+    const color = pick(COLORS);
+    const duration = rand(8, 14);
+    const drift = rand(-60, 60);
+
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    b.style.width = size + 'px';
+    b.style.height = size + 'px';
+    b.style.left = (startX - size/2) + 'px';
+    b.style.top = (window.innerHeight + 10) + 'px';
+    b.style.background = color.fill;
+    b.dataset.color = color.drop;
+
+    b.addEventListener('click', (e) => popBubble(b, e));
+    document.body.appendChild(b);
+
+    // Use Web Animations API for smooth float
+    const anim = b.animate([
+      { transform: 'translate(0, 0) scale(1)' },
+      { transform: `translate(${drift}px, -${window.innerHeight + size + 60}px) scale(1.05)` }
+    ], {
+      duration: duration * 1000,
+      easing: 'linear'
+    });
+
+    b._anim = anim;
+
+    anim.onfinish = () => {
+      if (b.parentNode) b.remove();
+    };
+  }
+
+  function popBubble(b, e) {
+    if (b._popped) return;
+    b._popped = true;
+    if (b._anim) {
+      const transform = getComputedStyle(b).transform;
+      b.style.transform = transform;
+      b._anim.cancel();
+    }
+
+    const rect = b.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    b.classList.add('pop');
+    setTimeout(() => b.remove(), 400);
+
+    // droplets
+    const dropCount = 8;
+    for (let i = 0; i < dropCount; i++) {
+      const d = document.createElement('div');
+      d.className = 'droplet';
+      d.style.background = b.dataset.color;
+      d.style.left = (cx - 7) + 'px';
+      d.style.top = (cy - 7) + 'px';
+      d.style.position = 'fixed';
+      const a = (i / dropCount) * Math.PI * 2;
+      const dist = rand(40, 90);
+      d.style.setProperty('--dx', Math.cos(a) * dist + 'px');
+      d.style.setProperty('--dy', Math.sin(a) * dist + 'px');
+      document.body.appendChild(d);
+      setTimeout(() => d.remove(), 650);
+    }
+
+    count++;
+    counter.textContent = count;
+    counter.classList.remove('pop');
+    void counter.offsetWidth;
+    counter.classList.add('pop');
+  }
+
+  // spawn loop - gentle and continuous
+  let spawnInterval = setInterval(spawnBubble, 700);
+  // initial burst so screen isn't empty
+  for (let i = 0; i < 4; i++) {
+    setTimeout(spawnBubble, i * 250);
+  }
+})();
+</script>
+</body>
+</html>
