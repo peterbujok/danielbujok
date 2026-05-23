@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Click to Pop!</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: #1a1333;
+    background-image:
+      radial-gradient(circle at 30% 20%, #4c1d9520 0%, transparent 50%),
+      radial-gradient(circle at 70% 80%, #7c3aed18 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, #312e8112 0%, transparent 60%);
+    font-family: 'Bubblegum Sans', cursive;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  h1 {
+    font-family: 'Lilita One', sans-serif;
+    font-size: clamp(22px, 4vw, 36px);
+    color: #fbbf24;
+    text-shadow: 2px 3px 0 #92400e88;
+    text-align: center;
+    letter-spacing: 1px;
+  }
+
+  .arena {
+    display: flex;
+    gap: clamp(24px, 6vw, 80px);
+    align-items: flex-end;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .station {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    width: 280px;
+  }
+
+  .label {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 20px;
+    color: #e2e8f0;
+    text-shadow: 1px 2px 0 #0008;
+  }
+
+  .stage {
+    position: relative;
+    width: 240px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* pressure bar */
+  .bar-track {
+    width: 180px;
+    height: 14px;
+    border-radius: 7px;
+    background: #334155;
+    overflow: hidden;
+    border: 2px solid #475569;
+    position: relative;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    transition: width 0.15s, background 0.15s;
+  }
+  .bar-fill.egg-bar { background: linear-gradient(90deg, #4ade80, #facc15, #f87171); }
+  .bar-fill.balloon-bar { background: linear-gradient(90deg, #60a5fa, #c084fc, #fb7185); }
+
+  .hint {
+    font-size: 15px;
+    color: #94a3b8;
+    min-height: 24px;
+    text-align: center;
+    transition: color 0.2s;
+  }
+  .hint.hot { color: #f87171; font-size: 17px; }
+  .hint.go { color: #4ade80; }
+
+  /* ===================== EGG ===================== */
+  .egg-wrap {
+    position: relative;
+    transition: transform 0.1s;
+  }
+
+  .egg-body {
+    width: 120px;
+    height: 150px;
+    background: linear-gradient(145deg, #d4f5d4, #86efac, #6bc96b);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: relative;
+    box-shadow:
+      inset -10px -8px 20px #22863a44,
+      inset 6px 6px 15px #bbf7d055,
+      0 8px 25px #0008;
+    transition: transform 0.08s, filter 0.2s;
+  }
+
+  /* spots on egg */
+  .egg-body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(circle 12px at 30% 35%, #4ade8044 60%, transparent 61%),
+      radial-gradient(circle 8px at 65% 25%, #22c55e33 60%, transparent 61%),
+      radial-gradient(circle 10px at 55% 65%, #16a34a33 60%, transparent 61%),
+      radial-gradient(circle 7px at 25% 70%, #4ade8033 60%, transparent 61%),
+      radial-gradient(circle 9px at 75% 50%, #22c55e22 60%, transparent 61%);
+    pointer-events: none;
+  }
+
+  .egg-shadow {
+    width: 100px;
+    height: 16px;
+    background: radial-gradient(ellipse, #0006, transparent 70%);
+    border-radius: 50%;
+    margin-top: 8px;
+    transition: transform 0.1s;
+  }
+
+  /* cracks overlay */
+  .crack-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .crack-layer svg { width: 100%; height: 100%; }
+
+  /* baby dino */
+  .dino-baby {
+    position: absolute;
+    font-size: 64px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    filter: drop-shadow(2px 4px 6px #0008);
+    z-index: 10;
+  }
+
+  /* egg shell pieces */
+  .shell-piece {
+    position: absolute;
+    width: 30px;
+    height: 25px;
+    border-radius: 40% 50% 45% 55%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* ===================== BALLOON ===================== */
+  .balloon-wrap {
+    position: relative;
+    transition: transform 0.1s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .balloon-body {
+    width: 110px;
+    height: 130px;
+    background: linear-gradient(145deg, #93c5fd, #6366f1, #7c3aed);
+    border-radius: 50% 50% 45% 45% / 55% 55% 45% 45%;
+    position: relative;
+    box-shadow:
+      inset -8px -6px 18px #4338ca55,
+      inset 8px 8px 20px #a5b4fc44,
+      0 6px 20px #0006;
+    transition: transform 0.08s, background 0.3s, width 0.15s, height 0.15s, border-radius 0.15s, filter 0.2s;
+  }
+
+  /* highlight shine */
+  .balloon-body::before {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 40px;
+    background: radial-gradient(ellipse, #fff6 0%, transparent 70%);
+    top: 18%;
+    left: 22%;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  /* knot nub */
+  .balloon-knot {
+    width: 16px;
+    height: 12px;
+    background: #6366f1;
+    border-radius: 0 0 50% 50%;
+    margin-top: -2px;
+    transition: background 0.3s;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* string */
+  .balloon-string {
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(to bottom, #94a3b8, #64748b);
+    border-radius: 1px;
+    position: relative;
+    z-index: 1;
+  }
+  .balloon-string::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 8px;
+    border: 2px solid #94a3b8;
+    border-radius: 50%;
+  }
+
+  .balloon-shadow {
+    width: 80px;
+    height: 14px;
+    background: radial-gradient(ellipse, #0005, transparent 70%);
+    border-radius: 50%;
+    margin-top: 10px;
+    transition: transform 0.1s;
+  }
+
+  /* stretch marks */
+  .stretch-marks {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    background:
+      linear-gradient(30deg, transparent 40%, #ffffff15 41%, transparent 42%),
+      linear-gradient(-25deg, transparent 55%, #ffffff12 56%, transparent 57%),
+      linear-gradient(60deg, transparent 30%, #ffffff10 31%, transparent 32%);
+  }
+
+  /* pop shrapnel */
+  .pop-piece {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  /* ===================== SHARED FX ===================== */
+  .particle-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* shake intensities */
+  @keyframes shake1 {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    25% { transform: translate(-2px, 1px) rotate(-1deg); }
+    75% { transform: translate(2px, -1px) rotate(1deg); }
+  }
+  @keyframes shake2 {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    20% { transform: translate(-3px, 2px) rotate(-2deg); }
+    40% { transform: translate(3px, -1px) rotate(2deg); }
+    60% { transform: translate(-2px, -2px) rotate(-1deg); }
+    80% { transform: translate(2px, 1px) rotate(1.5deg); }
+  }
+  @keyframes shake3 {
+    0%, 100% { transform: translate(0,0) rotate(0deg); }
+    10% { transform: translate(-4px, 3px) rotate(-3deg); }
+    30% { transform: translate(5px, -2px) rotate(3deg); }
+    50% { transform: translate(-3px, -3px) rotate(-2deg); }
+    70% { transform: translate(4px, 2px) rotate(2deg); }
+    90% { transform: translate(-2px, 1px) rotate(-1deg); }
+  }
+
+  /* screen flash */
+  .flash-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+    opacity: 0;
+  }
+  .flash-overlay.egg-flash { background: #4ade80; }
+  .flash-overlay.balloon-flash { background: #c084fc; }
+
+  @keyframes flashBang {
+    0% { opacity: 0.7; }
+    100% { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<h1>CLICK FAST TO INFLATE... KEEP GOING UNTIL THEY POP! 💥</h1>
+
+<div class="arena">
+
+  <!-- ===== DINO EGG ===== -->
+  <div class="station">
+    <div class="label">🥚 Dino Egg</div>
+    <div class="stage" id="eggStage">
+      <div class="egg-wrap" id="eggWrap">
+        <div class="egg-body" id="eggBody">
+          <div class="crack-layer" id="crackLayer1">
+            <svg viewBox="0 0 120 150"><polyline points="60,10 55,35 65,45 50,60" fill="none" stroke="#2d5a2d" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="crack-layer" id="crackLayer2">
+            <svg viewBox="0 0 120 150"><polyline points="95,40 80,55 85,70 70,80" fill="none" stroke="#1e4620" stroke-width="2.5" stroke-linecap="round"/></svg>
+          </div>
+          <div class="crack-layer" id="crackLayer3">
+            <svg viewBox="0 0 120 150">
+              <polyline points="25,50 40,65 35,80 45,90" fill="none" stroke="#1a3d1a" stroke-width="2.5" stroke-linecap="round"/>
+              <polyline points="60,85 70,95 55,110 65,120" fill="none" stroke="#1a3d1a" stroke-width="2" stroke-linecap="round"/>
+              <polyline points="85,20 75,30 80,38" fill="none" stroke="#1a3d1a" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+        </div>
+        <div class="dino-baby" id="dinoBaby">🦕</div>
+        <div class="egg-shadow" id="eggShadow"></div>
+      </div>
+    </div>
+    <div class="bar-track"><div class="bar-fill egg-bar" id="eggBar"></div></div>
+    <div class="hint go" id="eggHint">Tap fast!</div>
+  </div>
+
+  <!-- ===== BALLOON ===== -->
+  <div class="station">
+    <div class="label">🎈 Balloon</div>
+    <div class="stage" id="balloonStage">
+      <div class="balloon-wrap" id="balloonWrap">
+        <div class="balloon-body" id="balloonBody">
+          <div class="stretch-marks" id="stretchMarks"></div>
+        </div>
+        <div class="balloon-knot" id="balloonKnot"></div>
+        <div class="balloon-string" id="balloonString"></div>
+        <div class="balloon-shadow" id="balloonShadow"></div>
+      </div>
+    </div>
+    <div class="bar-track"><div class="bar-fill balloon-bar" id="balloonBar"></div></div>
+    <div class="hint go" id="balloonHint">Tap fast!</div>
+  </div>
+
+</div>
+
+<div class="particle-layer" id="particleLayer"></div>
+<div class="flash-overlay egg-flash" id="eggFlash"></div>
+<div class="flash-overlay balloon-flash" id="balloonFlash"></div>
+
+<script>
+// ========================= ENGINE =========================
+class InflateToy {
+  constructor(opts) {
+    this.el = opts.el;
+    this.bar = opts.bar;
+    this.hint = opts.hint;
+    this.onUpdate = opts.onUpdate;
+    this.onPop = opts.onPop;
+    this.onReset = opts.onReset;
+
+    this.pressure = 0;          // 0..100
+    this.maxPressure = 100;
+    this.clickBoost = 6;        // how much each click adds
+    this.decayRate = 12;        // per second
+    this.popped = false;
+    this.cooldown = false;
+
+    this.el.addEventListener('click', () => this.click());
+    this.el.addEventListener('touchstart', (e) => { e.preventDefault(); this.click(); }, { passive: false });
+
+    this._lastFrame = performance.now();
+    this._raf = requestAnimationFrame((t) => this._loop(t));
+  }
+
+  click() {
+    if (this.popped || this.cooldown) return;
+    this.pressure = Math.min(this.maxPressure, this.pressure + this.clickBoost);
+    if (this.pressure >= this.maxPressure) {
+      this.pop();
+    }
+  }
+
+  pop() {
+    this.popped = true;
+    this.cooldown = true;
+    this.onPop();
+    this.bar.style.width = '100%';
+    this.hint.textContent = '💥 BOOM!!! 💥';
+    this.hint.className = 'hint hot';
+
+    setTimeout(() => {
+      this.pressure = 0;
+      this.popped = false;
+      this.onReset();
+      this.hint.textContent = 'Go again!';
+      this.hint.className = 'hint go';
+      setTimeout(() => { this.cooldown = false; }, 300);
+    }, 2800);
+  }
+
+  _loop(now) {
+    const dt = (now - this._lastFrame) / 1000;
+    this._lastFrame = now;
+
+    if (!this.popped && !this.cooldown) {
+      this.pressure = Math.max(0, this.pressure - this.decayRate * dt);
+    }
+
+    // update bar
+    this.bar.style.width = this.pressure + '%';
+
+    // hints
+    if (!this.popped && !this.cooldown) {
+      if (this.pressure > 80) {
+        this.hint.textContent = '🔥 ALMOST THERE!!!';
+        this.hint.className = 'hint hot';
+      } else if (this.pressure > 50) {
+        this.hint.textContent = '😱 Keep going!!';
+        this.hint.className = 'hint hot';
+      } else if (this.pressure > 20) {
+        this.hint.textContent = '👀 Faster!';
+        this.hint.className = 'hint';
+      } else {
+        this.hint.textContent = 'Tap fast!';
+        this.hint.className = 'hint go';
+      }
+    }
+
+    if (!this.popped) this.onUpdate(this.pressure);
+
+    this._raf = requestAnimationFrame((t) => this._loop(t));
+  }
+}
+
+const particleLayer = document.getElementById('particleLayer');
+
+// ========================= EGG =========================
+const eggBody = document.getElementById('eggBody');
+const eggWrap = document.getElementById('eggWrap');
+const eggShadow = document.getElementById('eggShadow');
+const crack1 = document.getElementById('crackLayer1');
+const crack2 = document.getElementById('crackLayer2');
+const crack3 = document.getElementById('crackLayer3');
+const dinoBaby = document.getElementById('dinoBaby');
+const eggFlash = document.getElementById('eggFlash');
+
+function eggUpdate(p) {
+  const s = 1 + p * 0.003;
+  eggBody.style.transform = `scale(${s})`;
+  eggShadow.style.transform = `scaleX(${s})`;
+
+  // cracks appear in stages
+  crack1.style.opacity = p > 25 ? 1 : 0;
+  crack2.style.opacity = p > 55 ? 1 : 0;
+  crack3.style.opacity = p > 78 ? 1 : 0;
+
+  // shaking
+  if (p > 70) {
+    eggWrap.style.animation = 'shake3 0.12s linear infinite';
+  } else if (p > 40) {
+    eggWrap.style.animation = 'shake2 0.2s linear infinite';
+  } else if (p > 15) {
+    eggWrap.style.animation = 'shake1 0.35s linear infinite';
+  } else {
+    eggWrap.style.animation = 'none';
+  }
+
+  // color stress
+  const red = Math.min(40, p * 0.4);
+  eggBody.style.filter = `hue-rotate(-${red}deg) saturate(${1 + p * 0.008})`;
+}
+
+function eggPop() {
+  eggWrap.style.animation = 'none';
+  eggBody.style.transition = 'transform 0.2s, opacity 0.3s';
+  eggBody.style.transform = 'scale(1.5)';
+  eggBody.style.opacity = '0';
+
+  // flash
+  eggFlash.style.animation = 'flashBang 0.5s ease-out forwards';
+
+  // shell pieces
+  const rect = eggBody.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const greens = ['#86efac','#4ade80','#22c55e','#6bc96b','#a7f3d0'];
+
+  for (let i = 0; i < 14; i++) {
+    const sh = document.createElement('div');
+    sh.className = 'shell-piece';
+    sh.style.background = greens[Math.floor(Math.random() * greens.length)];
+    sh.style.left = cx + 'px';
+    sh.style.top = cy + 'px';
+    sh.style.width = (15 + Math.random() * 25) + 'px';
+    sh.style.height = (12 + Math.random() * 20) + 'px';
+    sh.style.borderRadius = '30% 50% 40% 60%';
+    sh.style.border = '2px solid #16a34a88';
+    particleLayer.appendChild(sh);
+
+    const angle = Math.random() * Math.PI * 2;
+    const vel = 100 + Math.random() * 250;
+    const dx = Math.cos(angle) * vel;
+    const dy = Math.sin(angle) * vel - 60;
+    const rot = (Math.random() - 0.5) * 900;
+
+    sh.animate([
+      { opacity: 1, transform: 'translate(0,0) rotate(0deg) scale(1)' },
+      { opacity: 1, transform: `translate(${dx*0.5}px,${dy*0.3}px) rotate(${rot*0.4}deg) scale(1)`, offset: 0.3 },
+      { opacity: 0, transform: `translate(${dx}px,${dy+200}px) rotate(${rot}deg) scale(0.4)` }
+    ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' })
+    .onfinish = () => sh.remove();
+  }
+
+  // dino reveal
+  setTimeout(() => {
+    dinoBaby.style.transition = 'none';
+    dinoBaby.style.transform = 'translate(-50%, -50%) scale(0)';
+    dinoBaby.animate([
+      { transform: 'translate(-50%, -50%) scale(0) rotate(-20deg)', opacity: 0 },
+      { transform: 'translate(-50%, -50%) scale(1.4) rotate(10deg)', opacity: 1, offset: 0.5 },
+      { transform: 'translate(-50%, -50%) scale(1.1) rotate(-5deg)', opacity: 1, offset: 0.7 },
+      { transform: 'translate(-50%, -50%) scale(1.2) rotate(0deg)', opacity: 1 }
+    ], { duration: 700, easing: 'ease-out', fill: 'forwards' });
+  }, 250);
+}
+
+function eggReset() {
+  eggBody.style.transition = 'transform 0.5s, opacity 0.5s, filter 0.3s';
+  eggBody.style.transform = 'scale(1)';
+  eggBody.style.opacity = '1';
+  eggBody.style.filter = 'none';
+  crack1.style.opacity = 0;
+  crack2.style.opacity = 0;
+  crack3.style.opacity = 0;
+  eggFlash.style.animation = 'none';
+
+  dinoBaby.animate([
+    { transform: 'translate(-50%, -50%) scale(1.2)', opacity: 1 },
+    { transform: 'translate(-50%, -80%) scale(0)', opacity: 0 }
+  ], { duration: 400, easing: 'ease-in', fill: 'forwards' });
+}
+
+new InflateToy({
+  el: document.getElementById('eggStage'),
+  bar: document.getElementById('eggBar'),
+  hint: document.getElementById('eggHint'),
+  onUpdate: eggUpdate,
+  onPop: eggPop,
+  onReset: eggReset
+});
+
+// ========================= BALLOON =========================
+const balloonBody = document.getElementById('balloonBody');
+const balloonWrap = document.getElementById('balloonWrap');
+const balloonKnot = document.getElementById('balloonKnot');
+const balloonString = document.getElementById('balloonString');
+const balloonShadow = document.getElementById('balloonShadow');
+const stretchMarks = document.getElementById('stretchMarks');
+const balloonFlash = document.getElementById('balloonFlash');
+
+const bBaseW = 110, bBaseH = 130;
+
+function balloonUpdate(p) {
+  const grow = 1 + p * 0.006;
+  const w = bBaseW * grow;
+  const h = bBaseH * grow;
+  balloonBody.style.width = w + 'px';
+  balloonBody.style.height = h + 'px';
+  balloonShadow.style.transform = `scaleX(${grow})`;
+
+  // color shifts from blue-purple toward stressed red
+  const hueShift = p * 0.8;
+  const sat = 1 + p * 0.01;
+  balloonBody.style.filter = `hue-rotate(${hueShift}deg) saturate(${sat})`;
+  balloonKnot.style.filter = `hue-rotate(${hueShift}deg)`;
+
+  // stretch marks
+  stretchMarks.style.opacity = p > 40 ? Math.min(1, (p - 40) / 40) : 0;
+
+  // rounder as it inflates
+  const roundness = 50 + p * 0.05;
+  balloonBody.style.borderRadius = `${roundness}% ${roundness}% ${45 + p*0.05}% ${45 + p*0.05}% / ${55 + p*0.05}% ${55 + p*0.05}% ${45 + p*0.05}% ${45 + p*0.05}%`;
+
+  // shaking
+  if (p > 70) {
+    balloonWrap.style.animation = 'shake3 0.1s linear infinite';
+  } else if (p > 40) {
+    balloonWrap.style.animation = 'shake2 0.18s linear infinite';
+  } else if (p > 15) {
+    balloonWrap.style.animation = 'shake1 0.3s linear infinite';
+  } else {
+    balloonWrap.style.animation = 'none';
+  }
+}
+
+function balloonPop() {
+  balloonWrap.style.animation = 'none';
+
+  // flash
+  balloonFlash.style.animation = 'flashBang 0.4s ease-out forwards';
+
+  // hide balloon parts
+  balloonBody.style.transition = 'transform 0.15s, opacity 0.2s';
+  balloonBody.style.transform = 'scale(1.6)';
+  balloonBody.style.opacity = '0';
+  balloonKnot.style.opacity = '0';
+  balloonString.style.transition = 'opacity 0.3s';
+  balloonString.style.opacity = '0';
+
+  // confetti + rubber pieces
+  const rect = balloonBody.getBoundingClientRect();
+  const cx = rect.left + rect.width / 2;
+  const cy = rect.top + rect.height / 2;
+  const popColors = ['#f472b6','#c084fc','#60a5fa','#facc15','#4ade80','#fb923c','#f87171','#38bdf8','#a78bfa'];
+
+  // rubber shreds
+  for (let i = 0; i < 10; i++) {
+    const p = document.createElement('div');
+    p.className = 'pop-piece';
+    const color = popColors[Math.floor(Math.random() * popColors.length)];
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    p.style.width = (8 + Math.random() * 20) + 'px';
+    p.style.height = (4 + Math.random() * 10) + 'px';
+    p.style.background = color;
+    p.style.borderRadius = '40%';
+    particleLayer.appendChild(p);
+
+    const angle = Math.random() * Math.PI * 2;
+    const vel = 80 + Math.random() * 200;
+    const dx = Math.cos(angle) * vel;
+    const dy = Math.sin(angle) * vel - 50;
+    const rot = (Math.random() - 0.5) * 1200;
+    const curl = Math.random() > 0.5 ? `scaleX(${0.3 + Math.random()})` : '';
+
+    p.animate([
+      { opacity: 1, transform: `translate(0,0) rotate(0deg) ${curl}` },
+      { opacity: 0, transform: `translate(${dx}px,${dy+160}px) rotate(${rot}deg) ${curl} scale(0.3)` }
+    ], { duration: 800 + Math.random() * 600, easing: 'cubic-bezier(.15,.8,.3,1)', fill: 'forwards' })
+    .onfinish = () => p.remove();
+  }
+
+  // sparkle confetti
+  for (let i = 0; i < 30; i++) {
+    const sp = document.createElement('div');
+    sp.style.position = 'absolute';
+    sp.style.pointerEvents = 'none';
+    sp.style.zIndex = '5';
+    const color = popColors[Math.floor(Math.random() * popColors.length)];
+    sp.style.left = cx + 'px';
+    sp.style.top = cy + 'px';
+    const size = 5 + Math.random() * 8;
+    sp.style.width = size + 'px';
+    sp.style.height = size + 'px';
+    sp.style.background = color;
+    sp.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    particleLayer.appendChild(sp);
+
+    const angle = Math.random() * Math.PI * 2;
+    const vel = 100 + Math.random() * 300;
+    const dx = Math.cos(angle) * vel;
+    const dy = Math.sin(angle) * vel - 80;
+    const rot = (Math.random() - 0.5) * 720;
+
+    sp.animate([
+      { opacity: 1, transform: 'translate(0,0) rotate(0deg) scale(1)' },
+      { opacity: 1, transform: `translate(${dx*0.5}px,${dy*0.3}px) rotate(${rot*0.4}deg) scale(1.1)`, offset: 0.35 },
+      { opacity: 0, transform: `translate(${dx}px,${dy+200}px) rotate(${rot}deg) scale(0.2)` }
+    ], { duration: 800 + Math.random() * 600, easing: 'cubic-bezier(.15,.8,.3,1)', fill: 'forwards' })
+    .onfinish = () => sp.remove();
+  }
+
+  // big POP text
+  const popText = document.createElement('div');
+  popText.textContent = 'POP!';
+  popText.style.cssText = `
+    position: absolute; left: ${cx}px; top: ${cy}px;
+    font-family: 'Lilita One', sans-serif; font-size: 64px;
+    color: #fbbf24; text-shadow: 3px 4px 0 #c026d3;
+    pointer-events: none; z-index: 50;
+    transform: translate(-50%, -50%) scale(0);
+  `;
+  particleLayer.appendChild(popText);
+  popText.animate([
+    { transform: 'translate(-50%,-50%) scale(0) rotate(-10deg)', opacity: 0 },
+    { transform: 'translate(-50%,-50%) scale(1.3) rotate(5deg)', opacity: 1, offset: 0.3 },
+    { transform: 'translate(-50%,-50%) scale(1.1) rotate(0deg)', opacity: 1, offset: 0.6 },
+    { transform: 'translate(-50%,-80%) scale(0.8) rotate(-3deg)', opacity: 0 }
+  ], { duration: 1200, easing: 'ease-out', fill: 'forwards' })
+  .onfinish = () => popText.remove();
+}
+
+function balloonReset() {
+  balloonBody.style.transition = 'width 0.5s, height 0.5s, transform 0.5s, opacity 0.5s, filter 0.3s, border-radius 0.3s';
+  balloonBody.style.width = bBaseW + 'px';
+  balloonBody.style.height = bBaseH + 'px';
+  balloonBody.style.transform = 'scale(1)';
+  balloonBody.style.opacity = '1';
+  balloonBody.style.filter = 'none';
+  balloonBody.style.borderRadius = '50% 50% 45% 45% / 55% 55% 45% 45%';
+  balloonKnot.style.opacity = '1';
+  balloonKnot.style.filter = 'none';
+  balloonString.style.opacity = '1';
+  stretchMarks.style.opacity = '0';
+  balloonFlash.style.animation = 'none';
+}
+
+new InflateToy({
+  el: document.getElementById('balloonStage'),
+  bar: document.getElementById('balloonBar'),
+  hint: document.getElementById('balloonHint'),
+  onUpdate: balloonUpdate,
+  onPop: balloonPop,
+  onReset: balloonReset
+});
+</script>
+</body>
+</html>

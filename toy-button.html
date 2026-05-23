@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Toy Button!</title>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bubblegum+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef3c7;
+    background-image:
+      radial-gradient(circle at 20% 30%, #fbbf2440 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, #f9a8d440 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, #a7f3d040 0%, transparent 60%);
+    overflow: hidden;
+    font-family: 'Bubblegum Sans', cursive;
+  }
+
+  .scene {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .click-counter {
+    font-family: 'Lilita One', sans-serif;
+    font-size: 28px;
+    color: #7c3aed;
+    text-shadow: 2px 2px 0 #fbbf24;
+    letter-spacing: 1px;
+    min-height: 40px;
+    transition: transform 0.2s;
+  }
+
+  .click-counter.pop {
+    animation: counterPop 0.35s ease;
+  }
+
+  @keyframes counterPop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.4) rotate(-3deg); }
+    100% { transform: scale(1); }
+  }
+
+  /* ---- THE BUTTON ---- */
+  .toy-btn {
+    position: relative;
+    padding: 28px 64px;
+    font-family: 'Lilita One', sans-serif;
+    font-size: 38px;
+    color: #fff;
+    text-shadow: 2px 3px 0 #b91c8880;
+    border: none;
+    border-radius: 26px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #f472b6, #c084fc, #60a5fa);
+    box-shadow:
+      0 8px 0 #9333ea,
+      0 12px 20px rgba(0,0,0,0.18),
+      inset 0 2px 4px rgba(255,255,255,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    outline: none;
+    z-index: 1;
+  }
+
+  /* sprinkles layer */
+  .toy-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 26px;
+    background:
+      radial-gradient(circle 3px at 12% 25%, #facc15 55%, transparent 56%),
+      radial-gradient(circle 2.5px at 30% 70%, #34d399 55%, transparent 56%),
+      radial-gradient(circle 3px at 55% 18%, #fb923c 55%, transparent 56%),
+      radial-gradient(circle 2px at 72% 60%, #f87171 55%, transparent 56%),
+      radial-gradient(circle 2.5px at 88% 35%, #38bdf8 55%, transparent 56%),
+      radial-gradient(circle 3px at 20% 50%, #a78bfa 55%, transparent 56%),
+      radial-gradient(circle 2px at 45% 80%, #fb7185 55%, transparent 56%),
+      radial-gradient(circle 2.5px at 65% 40%, #4ade80 55%, transparent 56%),
+      radial-gradient(circle 3px at 82% 78%, #fbbf24 55%, transparent 56%),
+      radial-gradient(circle 2px at 38% 30%, #22d3ee 55%, transparent 56%),
+      radial-gradient(circle 2.5px at 8% 75%, #e879f9 55%, transparent 56%),
+      radial-gradient(circle 2px at 92% 15%, #f97316 55%, transparent 56%),
+      radial-gradient(circle 3px at 50% 55%, #fde047 55%, transparent 56%),
+      radial-gradient(circle 2px at 75% 22%, #c084fc 55%, transparent 56%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  .btn-text {
+    position: relative;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* floating toy emojis around the button */
+  .toy {
+    position: absolute;
+    font-size: 30px;
+    pointer-events: none;
+    animation: floatToy 3s ease-in-out infinite;
+    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.15));
+    z-index: 0;
+  }
+
+  .toy:nth-child(1)  { top: -30px; left: -30px; animation-delay: 0s; }
+  .toy:nth-child(2)  { top: -28px; right: -25px; animation-delay: 0.5s; }
+  .toy:nth-child(3)  { bottom: -28px; left: -20px; animation-delay: 1s; }
+  .toy:nth-child(4)  { bottom: -30px; right: -28px; animation-delay: 1.5s; }
+  .toy:nth-child(5)  { top: 50%; left: -40px; transform: translateY(-50%); animation-delay: 0.7s; }
+  .toy:nth-child(6)  { top: 50%; right: -40px; transform: translateY(-50%); animation-delay: 1.2s; }
+  .toy:nth-child(7)  { top: -38px; left: 50%; transform: translateX(-50%); animation-delay: 0.3s; }
+  .toy:nth-child(8)  { bottom: -38px; left: 50%; transform: translateX(-50%); animation-delay: 0.9s; }
+
+  @keyframes floatToy {
+    0%, 100% { translate: 0 0; rotate: 0deg; }
+    25% { translate: 3px -6px; rotate: 5deg; }
+    50% { translate: -2px -10px; rotate: -3deg; }
+    75% { translate: 4px -5px; rotate: 4deg; }
+  }
+
+  /* ---- HOVER ---- */
+  .toy-btn:hover {
+    transform: scale(1.08);
+    box-shadow:
+      0 10px 0 #9333ea,
+      0 16px 28px rgba(0,0,0,0.22),
+      inset 0 2px 4px rgba(255,255,255,0.5);
+    animation: wiggle 0.4s ease infinite;
+  }
+
+  .toy-btn:hover ~ .toy {
+    animation: floatToy 1.2s ease-in-out infinite, spinToy 1.5s linear infinite;
+  }
+
+  @keyframes wiggle {
+    0%, 100% { rotate: 0deg; }
+    25% { rotate: -3deg; }
+    75% { rotate: 3deg; }
+  }
+
+  @keyframes spinToy {
+    from { rotate: 0deg; }
+    to { rotate: 360deg; }
+  }
+
+  /* ---- CLICK / ACTIVE ---- */
+  .toy-btn:active {
+    transform: scale(0.95) translateY(4px);
+    box-shadow:
+      0 3px 0 #9333ea,
+      0 5px 10px rgba(0,0,0,0.15),
+      inset 0 2px 4px rgba(255,255,255,0.3);
+    animation: none;
+  }
+
+  .toy-btn.go-boom {
+    animation: boomShake 0.5s ease;
+  }
+
+  @keyframes boomShake {
+    0% { transform: scale(1); }
+    15% { transform: scale(0.9) rotate(-4deg); }
+    30% { transform: scale(1.12) rotate(3deg); }
+    45% { transform: scale(1.05) rotate(-2deg); }
+    60% { transform: scale(1.08) rotate(1deg); }
+    100% { transform: scale(1) rotate(0deg); }
+  }
+
+  /* ---- CONFETTI PARTICLES ---- */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    opacity: 0;
+  }
+
+  .confetti.circle { border-radius: 50%; }
+  .confetti.star {
+    width: 0; height: 0;
+    background: none !important;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 12px solid var(--c);
+    border-radius: 0;
+  }
+
+  /* ---- SOUND EMOJI BURST ---- */
+  .sound-burst {
+    position: absolute;
+    font-size: 32px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10;
+  }
+
+  @keyframes emojiPop {
+    0% { opacity: 1; transform: scale(0.3) translateY(0); }
+    50% { opacity: 1; transform: scale(1.2) translateY(-40px); }
+    100% { opacity: 0; transform: scale(0.8) translateY(-80px); }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="click-counter" id="counter"></div>
+
+  <div style="position:relative; display:inline-block;">
+    <button class="toy-btn" id="toyBtn" onclick="handleClick(event)">
+      <span class="btn-text">PRESS ME!</span>
+    </button>
+    <!-- floating toys -->
+    <span class="toy">🧸</span>
+    <span class="toy">🚀</span>
+    <span class="toy">🎨</span>
+    <span class="toy">🦖</span>
+    <span class="toy">🪀</span>
+    <span class="toy">🎮</span>
+    <span class="toy">⭐</span>
+    <span class="toy">🪁</span>
+  </div>
+</div>
+
+<div class="confetti-container" id="confettiBox"></div>
+
+<script>
+  const btn = document.getElementById('toyBtn');
+  const confettiBox = document.getElementById('confettiBox');
+  const counterEl = document.getElementById('counter');
+  let clicks = 0;
+
+  const colors = ['#f472b6','#facc15','#34d399','#60a5fa','#fb923c','#a78bfa','#f87171','#22d3ee','#4ade80','#e879f9'];
+  const funEmojis = ['🎉','✨','💥','🌟','🎊','💫','🔥','⚡','🪩','🫧'];
+  const messages = [
+    '', '1 click!', '2 clicks!', '3!! Nice!', 'FOUR!', 'HIGH FIVE! ✋',
+    '6 WOW', '7 WHOA', '8 CRAZY', '9 EPIC!!', '🔟 LEGENDARY!!!'
+  ];
+
+  function handleClick(e) {
+    clicks++;
+    spawnConfetti(e);
+    spawnEmojiBurst();
+    shakeButton();
+    updateCounter();
+  }
+
+  function updateCounter() {
+    const msg = clicks <= 10 ? messages[clicks] : `${clicks} clicks! 🤯`;
+    counterEl.textContent = msg;
+    counterEl.classList.remove('pop');
+    void counterEl.offsetWidth;
+    counterEl.classList.add('pop');
+  }
+
+  function shakeButton() {
+    btn.classList.remove('go-boom');
+    void btn.offsetWidth;
+    btn.classList.add('go-boom');
+  }
+
+  function spawnConfetti(e) {
+    const rect = btn.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    for (let i = 0; i < 35; i++) {
+      const el = document.createElement('div');
+      const shape = Math.random() > 0.6 ? 'circle' : (Math.random() > 0.5 ? 'star' : '');
+      el.className = 'confetti ' + shape;
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      if (shape === 'star') {
+        el.style.setProperty('--c', color);
+      } else {
+        el.style.background = color;
+      }
+
+      el.style.left = cx + 'px';
+      el.style.top = cy + 'px';
+      el.style.width = (6 + Math.random() * 8) + 'px';
+      el.style.height = (6 + Math.random() * 8) + 'px';
+      confettiBox.appendChild(el);
+
+      const angle = Math.random() * Math.PI * 2;
+      const velocity = 120 + Math.random() * 260;
+      const dx = Math.cos(angle) * velocity;
+      const dy = Math.sin(angle) * velocity - 80;
+      const rot = (Math.random() - 0.5) * 720;
+      const dur = 700 + Math.random() * 600;
+
+      el.animate([
+        { opacity: 1, transform: 'translate(0,0) rotate(0deg) scale(1)' },
+        { opacity: 1, transform: `translate(${dx * 0.6}px, ${dy * 0.4}px) rotate(${rot * 0.5}deg) scale(1.1)`, offset: 0.4 },
+        { opacity: 0, transform: `translate(${dx}px, ${dy + 180}px) rotate(${rot}deg) scale(0.3)` }
+      ], { duration: dur, easing: 'cubic-bezier(.15,.8,.3,1)', fill: 'forwards' })
+      .onfinish = () => el.remove();
+    }
+  }
+
+  function spawnEmojiBurst() {
+    const rect = btn.getBoundingClientRect();
+    for (let i = 0; i < 4; i++) {
+      const em = document.createElement('span');
+      em.className = 'sound-burst';
+      em.textContent = funEmojis[Math.floor(Math.random() * funEmojis.length)];
+      em.style.left = (rect.left + Math.random() * rect.width) + 'px';
+      em.style.top = (rect.top + Math.random() * rect.height * 0.5) + 'px';
+      em.style.fontSize = (24 + Math.random() * 20) + 'px';
+      document.body.appendChild(em);
+
+      const xDrift = (Math.random() - 0.5) * 100;
+      em.animate([
+        { opacity: 1, transform: `scale(0.3) translate(0, 0) rotate(0deg)` },
+        { opacity: 1, transform: `scale(1.3) translate(${xDrift * 0.5}px, -50px) rotate(${(Math.random()-0.5)*30}deg)`, offset: 0.5 },
+        { opacity: 0, transform: `scale(0.7) translate(${xDrift}px, -100px) rotate(${(Math.random()-0.5)*60}deg)` }
+      ], { duration: 800 + Math.random() * 400, easing: 'ease-out', fill: 'forwards' })
+      .onfinish = () => em.remove();
+    }
+  }
+</script>
+
+</body>
+</html>
